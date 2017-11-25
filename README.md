@@ -1,1 +1,1 @@
-# sqlTemplater
+# SqlTemplater
