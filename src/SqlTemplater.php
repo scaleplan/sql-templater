@@ -46,8 +46,13 @@ class SqlTemplater
                     } else {
                         $new_data = $data;
                     }
-                    $request = str_replace($value, self::createSelectString(array_diff_key($new_data,
-                        array_flip(explode(',', str_replace(' ', '', $match[1][$key]))))), $request);
+
+                    $request = str_replace($value, self::createSelectString(
+                        array_diff_key(
+                            $new_data,
+                            array_flip(explode(',', str_replace(' ', '', $match[1][$key])))
+                        )
+                    ), $request);
                 }
             }
 
@@ -136,22 +141,27 @@ class SqlTemplater
                             $tmp .= ":$k$index,";
                             $dataTmp[$k . $index] = $v;
                         }
+
                         unset($v);
                         $string .= '(' . trim($tmp, ',') . '),';
                     }
+
                     $string = trim($string, ',');
                     $data = $dataTmp;
                     unset($dataTmp, $tmp, $value);
                 } else {
                     $string = '(:' . implode(',:', $data) . ')';
                 }
+
                 break;
+
             case 'update':
                 $dataTmp = array_map(function ($item) {
                     return "$item = :$item";
                 }, array_keys($data));
 
                 $string = implode(', ', $dataTmp);
+
                 break;
         }
 
