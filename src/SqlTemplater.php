@@ -14,9 +14,9 @@ class SqlTemplater
      * @param string $request - шаблон SQL-запроса
      * @param array $data - данные для выполнения запроса
      *
-     * @return string
+     * @return array
      */
-    public static function sql(string &$request, array &$data): string
+    public static function sql(string &$request, array &$data): array
     {
         $createExpression = function (&$data, $pos) use ($request): string
         {
@@ -106,7 +106,7 @@ class SqlTemplater
             unset($value);
         }
 
-        if (preg_match_all('/\[(([\w\d_\-\.]+)\s*=\s*.+?)\]/i', $request, $match, PREG_SET_ORDER)) {
+        if (preg_match_all('/\[(?:AND|OR|NOT|AND NOT|OR NOT|WHERE)*\s*[\w\d_\-\.]+\s*(?:=|!=|<>|IN|NOT\s+IN)\s*:([\w\d_\-]+)\]/i', $request, $match, PREG_SET_ORDER)) {
             foreach ($match as $m) {
                 if (in_array($m[4], $data)) {
                     $request = str_replace($m[2], $m[3], $request);
@@ -117,7 +117,7 @@ class SqlTemplater
         }
 
         self::createAllPostgresArrayPlaceholders($request, $data);
-        return $request;
+        return [$request, $data];
     }
 
     /**
@@ -217,13 +217,13 @@ class SqlTemplater
      */
     public static function createAllPostgresArrayPlaceholders(string &$sql, array &$array): array
     {
-        if (!isset($array[0])) {
+        if (empty($array[0])) {
             $array = [$array];
         }
 
         foreach ($array as $record) {
             foreach ($record as $key => &$value) {
-                if (!(gettype($value) === 'array')) {
+                if (!is_array($value)) {
                     continue;
                 }
 
@@ -234,6 +234,7 @@ class SqlTemplater
             }
         }
 
+        $array = count($array) > 1 ? $array : reset($array);
         return [$sql, $array];
     }
 }
