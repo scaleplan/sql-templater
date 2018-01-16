@@ -11,23 +11,37 @@ class SqlTemplater
     /**
      * Разбор SQL-шаблона
      *
-     * @param string $request - шаблон SQL-запроса
+     * @param string $sql - шаблон SQL-запроса
      * @param array $data - данные для выполнения запроса
      *
      * @return array
      */
-    public static function sql(string &$request, array &$data): array
+    public static function sql(string &$sql, array &$data): array
     {
-        $createExpression = function (&$data, $pos) use ($request): string
+        if (preg_match_all('/\[(?:AND|OR|NOT|AND NOT|OR NOT|WHERE)*\s*[\w\d_\-\.]+\s*(?:=|!=|<>|IN|NOT\s+IN)\s*:([\w\d_\-]+)\]/i', $sql, $match, PREG_SET_ORDER)) {
+            foreach ($match as $m) {
+                if (in_array($m[4], $data)) {
+                    $sql = str_replace($m[2], $m[3], $sql);
+                } else {
+                    $sql = str_replace($m[0], '', $sql);
+                }
+            }
+        }
+
+        if (!preg_match('/(\[expression.*\]|\[fields.*\])/i', $sql)) {
+            return [$sql, self::removeExcessSQLArgs($sql, $data)];
+        }
+
+        $createExpression = function (&$data, $pos) use ($sql): string
         {
-            $iPos = strripos(substr($request, 0, $pos), 'INSERT');
-            $uPos = strripos(substr($request, 0, $pos), 'UPDATE');
+            $iPos = strripos(substr($sql, 0, $pos), 'INSERT');
+            $uPos = strripos(substr($sql, 0, $pos), 'UPDATE');
             if (($iPos !== false && ($iPos > $uPos || $uPos === false))) {
                 return self::createPrepareFields($data);
             } elseif ($uPos !== false && ($uPos > $iPos || $iPos === false)) {
                 $data2 = $data;
                 foreach (array_keys($data) as $key) {
-                    if (strpos($request, ':' . $key) !== false) {
+                    if (strpos($sql, ':' . $key) !== false) {
                         unset($data2[$key]);
                     }
                 }
@@ -35,10 +49,10 @@ class SqlTemplater
                 return self::createPrepareFields($data2, 'update');
             }
 
-            return $request;
+            return $sql;
         };
 
-        if (preg_match_all('/\[fields\:not\((.+?)\)\]/i', $request, $match)) {
+        if (preg_match_all('/\[fields\:not\((.+?)\)\]/i', $sql, $match)) {
             foreach ($match[0] as $key => & $value) {
                 if ($value) {
                     if (isset($data[0]) && is_array($data[0])) {
@@ -47,19 +61,19 @@ class SqlTemplater
                         $new_data = $data;
                     }
 
-                    $request = str_replace($value, self::createSelectString(
+                    $sql = str_replace($value, self::createSelectString(
                         array_diff_key(
                             $new_data,
                             array_flip(explode(',', str_replace(' ', '', $match[1][$key])))
                         )
-                    ), $request);
+                    ), $sql);
                 }
             }
 
             unset($value);
         }
 
-        if (preg_match_all('/\[expression:not\((.+?)\)\]/i', $request, $match, PREG_OFFSET_CAPTURE)) {
+        if (preg_match_all('/\[expression:not\((.+?)\)\]/i', $sql, $match, PREG_OFFSET_CAPTURE)) {
             $new_data = [];
             foreach ($match[0] as $key => &$value) {
                 if ($value) {
@@ -79,10 +93,10 @@ class SqlTemplater
                         );
                     }
 
-                    $request = substr_replace($request, $createExpression($new_data, $value[1]), $value[1], strlen($value[0]));
+                    $sql = substr_replace($sql, $createExpression($new_data, $value[1]), $value[1], strlen($value[0]));
                     $createExpression($data, $value[1]);
                     foreach (array_keys($data) as $k) {
-                        if (strpos($request, ':' . $k) === false) {
+                        if (strpos($sql, ':' . $k) === false) {
                             unset($data[$k]);
                         }
                     }
@@ -92,32 +106,22 @@ class SqlTemplater
             unset($value);
         }
 
-        if (stripos($request, '[fields]')) {
-            $request = str_replace('[fields]', self::createSelectString($data), $request);
+        if (stripos($sql, '[fields]')) {
+            $sql = str_replace('[fields]', self::createSelectString($data), $sql);
         }
 
-        if (preg_match_all('/\[expression\]/i', $request, $match, PREG_OFFSET_CAPTURE)) {
+        if (preg_match_all('/\[expression\]/i', $sql, $match, PREG_OFFSET_CAPTURE)) {
             foreach ($match[0] as $key => &$value) {
                 if ($value) {
-                    $request = substr_replace($request, $createExpression($data, $value[1]), $value[1], strlen($value[0]));
+                    $sql = substr_replace($sql, $createExpression($data, $value[1]), $value[1], strlen($value[0]));
                 }
             }
 
             unset($value);
         }
 
-        if (preg_match_all('/\[(?:AND|OR|NOT|AND NOT|OR NOT|WHERE)*\s*[\w\d_\-\.]+\s*(?:=|!=|<>|IN|NOT\s+IN)\s*:([\w\d_\-]+)\]/i', $request, $match, PREG_SET_ORDER)) {
-            foreach ($match as $m) {
-                if (in_array($m[4], $data)) {
-                    $request = str_replace($m[2], $m[3], $request);
-                } else {
-                    $request = str_replace($m[0], '', $request);
-                }
-            }
-        }
-
-        self::createAllPostgresArrayPlaceholders($request, $data);
-        return [$request, $data];
+        self::createAllPostgresArrayPlaceholders($sql, $data);
+        return [$sql, $data];
     }
 
     /**
@@ -236,5 +240,34 @@ class SqlTemplater
 
         $array = count($array) > 1 ? $array : reset($array);
         return [$sql, $array];
+    }
+
+    /**
+     * Получить из SQL-запроса все параметры
+     *
+     * @param $sql
+     * @return array
+     */
+    public static function getSQLParams($sql): array
+    {
+        if (preg_match_all('/[^:]:([\w\d_\-]+)/i', $sql, $matches))
+        {
+            return array_unique($matches[1]);
+        }
+
+        return [];
+    }
+
+    /**
+     * Почистить параметры SQL-запроса от неиспользуемых в запросе
+     *
+     * @param string $sql - текст запроса
+     * @param array $args - параметры запроса
+     *
+     * @return array
+     */
+    public static function removeExcessSQLArgs(string $sql, array $args): array
+    {
+        return array_intersect_key($args, array_flip(self::getSQLParams($sql)));
     }
 }
