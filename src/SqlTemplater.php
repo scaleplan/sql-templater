@@ -132,7 +132,7 @@ class SqlTemplater
      *
      * @return string
      */
-    public static function createPrepareFields(array & $data, string $type = 'insert'): string
+    public static function createPrepareFields(array &$data, string $type = 'insert'): string
     {
         $string = '';
         $dataTmp = [];
@@ -154,7 +154,7 @@ class SqlTemplater
                     $data = $dataTmp;
                     unset($dataTmp, $tmp, $value);
                 } else {
-                    $string = '(:' . implode(',:', $data) . ')';
+                    $string = '(:' . implode(',:', array_keys($data)) . ')';
                 }
 
                 break;
@@ -246,6 +246,7 @@ class SqlTemplater
      * Получить из SQL-запроса все параметры
      *
      * @param $sql
+     *
      * @return array
      */
     public static function getSQLParams($sql): array
