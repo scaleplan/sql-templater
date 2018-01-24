@@ -8,6 +8,24 @@ class SqlTemplaterException extends \Exception
 
 class SqlTemplater
 {
+    public static function renderConditions(string &$sql, array &$data): array
+    {
+        if (!preg_match_all('/\[((?:AND|OR|NOT|AND NOT|OR NOT|WHERE)\s+.+?\s+:([\w\d_\-]+))\]/i', $sql, $match, PREG_SET_ORDER)) {
+            return [$sql, $data];
+        }
+
+        foreach ($match as $m) {
+            $replace = '';
+            if (array_key_exists($m[2], $data)) {
+                $replace = $m[1];
+            }
+
+            $sql = str_replace($m[0], $replace, $sql);
+        }
+
+        return [$sql, $data];
+    }
+
     /**
      * Разбор SQL-шаблона
      *
@@ -18,15 +36,7 @@ class SqlTemplater
      */
     public static function sql(string &$sql, array &$data): array
     {
-        if (preg_match_all('/\[(?:AND|OR|NOT|AND NOT|OR NOT|WHERE)*\s*[\w\d_\-\.]+\s*(?:=|!=|<>|IN|NOT\s+IN)\s*:([\w\d_\-]+)\]/i', $sql, $match, PREG_SET_ORDER)) {
-            foreach ($match as $m) {
-                if (in_array($m[4], $data)) {
-                    $sql = str_replace($m[2], $m[3], $sql);
-                } else {
-                    $sql = str_replace($m[0], '', $sql);
-                }
-            }
-        }
+        self::renderConditions($sql, $data);
 
         if (!preg_match('/(\[expression.*\]|\[fields.*\])/i', $sql)) {
             return [$sql, self::removeExcessSQLArgs($sql, $data)];
@@ -245,11 +255,11 @@ class SqlTemplater
     /**
      * Получить из SQL-запроса все параметры
      *
-     * @param $sql
+     * @param string $sql - текст запроса
      *
      * @return array
      */
-    public static function getSQLParams($sql): array
+    public static function getSQLParams(string $sql): array
     {
         if (preg_match_all('/[^:]:([\w\d_\-]+)/i', $sql, $matches))
         {
@@ -267,8 +277,44 @@ class SqlTemplater
      *
      * @return array
      */
-    public static function removeExcessSQLArgs(string $sql, array $args): array
+    public static function removeExcessSQLArgs(string &$sql, array &$args): array
     {
-        return array_intersect_key($args, array_flip(self::getSQLParams($sql)));
+        return $args = array_intersect_key($args, array_flip(self::getSQLParams($sql)));
+    }
+
+    /**
+     * Слить несколько полей в одно hstore-поле
+     *
+     * @param string $fieldName - в какое поле писать результат
+     * @param array $keys - какие поля сливаем
+     * @param array - обрабатываемые данные
+     *
+     * @return array
+     */
+    public static function arraysToHstoreArrays(string $fieldName, array $keys, array &$data): array
+    {
+        if (empty($data[0])) {
+            $data = [$data];
+        }
+
+        foreach ($data as $record) {
+            $cnt = !empty($record[$keys[0]]) ? (is_array($record[$keys[0]]) ? count($record[$keys[0]]) : 1) : 0;
+            for ($i = 0; $i < $cnt; $i++) {
+                foreach ($keys as $key) {
+                    if (empty($record[$key][$i])) {
+                        continue;
+                    }
+
+                    $record[$fieldName][][] = "hstore($key, {$record[$key][$i]})";
+                }
+
+                $record[$fieldName][] = implode(' || ', $record[$fieldName][$i]);
+            }
+
+            $record[$fieldName] = !empty($record[$fieldName]) ? '{' . implode(', ', $record[$fieldName]) . '}' : null;
+            $record = array_diff_key($record, $keys);
+        }
+
+        return count($data) > 1 ? $data : $data[0];
     }
 }
