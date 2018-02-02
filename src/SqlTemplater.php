@@ -8,6 +8,14 @@ class SqlTemplaterException extends \Exception
 
 class SqlTemplater
 {
+    /**
+     * Актуализировать условия
+     *
+     * @param string $sql - текст запроса
+     * @param array $data - параметры запроса
+     *
+     * @return array
+     */
     public static function renderConditions(string &$sql, array &$data): array
     {
         if (!preg_match_all('/\[((?:AND|OR|NOT|AND NOT|OR NOT|WHERE)\s+.+?\s+:([\w\d_\-]+))\]/i', $sql, $match, PREG_SET_ORDER)) {
@@ -27,14 +35,44 @@ class SqlTemplater
     }
 
     /**
+     * Собрать данные для вставки или изменениях
+     *
+     * @param string $sql - текст запроса
+     * @param array $data - параметры запроса
+     * @param int $pos - позиция вставки
+     *
+     * @return array
+     */
+    public static function createExpression(string &$sql, array &$data, int &$pos): string
+    {
+        $iPos = strripos(substr($sql, 0, $pos), 'INSERT');
+        $uPos = strripos(substr($sql, 0, $pos), 'UPDATE');
+        if (($iPos !== false && ($iPos > $uPos || $uPos === false))) {
+            return self::createPrepareFields($data);
+        } elseif ($uPos !== false && ($uPos > $iPos || $iPos === false)) {
+            $data2 = $data;
+            foreach (array_keys($data) as $key) {
+                if (strpos($sql, ':' . $key) !== false) {
+                    unset($data2[$key]);
+                }
+            }
+
+            return self::createPrepareFields($data2, 'update');
+        }
+
+        return $sql;
+    }
+
+    /**
      * Разбор SQL-шаблона
      *
      * @param string $sql - шаблон SQL-запроса
      * @param array $data - данные для выполнения запроса
+     * @param bool $convertArrays - преобразовывать ли массивы PHP в массивы PostgreSQL
      *
      * @return array
      */
-    public static function sql(string &$sql, array &$data): array
+    public static function sql(string &$sql, array &$data, bool $convertArrays = true): array
     {
         self::renderConditions($sql, $data);
 
@@ -42,28 +80,8 @@ class SqlTemplater
             return [$sql, self::removeExcessSQLArgs($sql, $data)];
         }
 
-        $createExpression = function (&$data, $pos) use ($sql): string
-        {
-            $iPos = strripos(substr($sql, 0, $pos), 'INSERT');
-            $uPos = strripos(substr($sql, 0, $pos), 'UPDATE');
-            if (($iPos !== false && ($iPos > $uPos || $uPos === false))) {
-                return self::createPrepareFields($data);
-            } elseif ($uPos !== false && ($uPos > $iPos || $iPos === false)) {
-                $data2 = $data;
-                foreach (array_keys($data) as $key) {
-                    if (strpos($sql, ':' . $key) !== false) {
-                        unset($data2[$key]);
-                    }
-                }
-
-                return self::createPrepareFields($data2, 'update');
-            }
-
-            return $sql;
-        };
-
         if (preg_match_all('/\[fields\:not\((.+?)\)\]/i', $sql, $match)) {
-            foreach ($match[0] as $key => & $value) {
+            foreach ($match[0] as $key => &$value) {
                 if ($value) {
                     if (isset($data[0]) && is_array($data[0])) {
                         $new_data = $data[0];
@@ -103,8 +121,8 @@ class SqlTemplater
                         );
                     }
 
-                    $sql = substr_replace($sql, $createExpression($new_data, $value[1]), $value[1], strlen($value[0]));
-                    $createExpression($data, $value[1]);
+                    $sql = substr_replace($sql, self::createExpression($sql, $new_data, $value[1]), $value[1], strlen($value[0]));
+                    self::createExpression($sql, $data, $value[1]);
                     foreach (array_keys($data) as $k) {
                         if (strpos($sql, ':' . $k) === false) {
                             unset($data[$k]);
@@ -123,14 +141,17 @@ class SqlTemplater
         if (preg_match_all('/\[expression\]/i', $sql, $match, PREG_OFFSET_CAPTURE)) {
             foreach ($match[0] as $key => &$value) {
                 if ($value) {
-                    $sql = substr_replace($sql, $createExpression($data, $value[1]), $value[1], strlen($value[0]));
+                    $sql = substr_replace($sql, self::createExpression($sql,$data, $value[1]), $value[1], strlen($value[0]));
                 }
             }
 
             unset($value);
         }
 
-        self::createAllPostgresArrayPlaceholders($sql, $data);
+        if ($convertArrays) {
+            self::createAllPostgresArrayPlaceholders($sql, $data);
+        }
+
         return [$sql, $data];
     }
 
@@ -151,7 +172,7 @@ class SqlTemplater
                 if (isset($data[0]) && is_array($data[0])) {
                     foreach ($data as $index => & $value) {
                         $tmp = '';
-                        foreach ($value as $k => & $v) {
+                        foreach ($value as $k => &$v) {
                             $tmp .= ":$k$index,";
                             $dataTmp[$k . $index] = $v;
                         }
@@ -206,7 +227,7 @@ class SqlTemplater
      *
      * @return array
      */
-    public static function createPostgresArrayPlaceholders(array &$array, string $fieldName = null): array
+    public static function createPostgresArrayPlaceholders(array &$array, string $fieldName = null, string $castType = ''): array
     {
         $fieldName = $fieldName ?? 'array';
         $count = count($array);
@@ -218,38 +239,49 @@ class SqlTemplater
             $placeholders[] = ":$name";
         }
 
-        return [$placeholders, $array];
+        return ['ARRAY[' . implode(', ', $placeholders) . "]::$castType" , $array];
+    }
+
+    public static function replacePostgresArray(string &$sql, array &$record, string $fieldName, string $castType = ''): array
+    {
+        if (empty($record[$fieldName]) || !is_array($record[$fieldName])) {
+            return [$sql, $record];
+        }
+
+        list($placeholders, $newValue) = self::createPostgresArrayPlaceholders($record[$fieldName], $fieldName, $castType);
+        $sql = str_replace(":$fieldName", $placeholders, $sql);
+        unset($record[$fieldName]);
+        $record += $newValue;
+
+        return [$sql, $record];
     }
 
     /**
      * Перестроить запрос и набор данных, если данные содержат значения в виде массиво
      *
      * @param string $sql - текст SQL-запроса
-     * @param array $array - массив данных для выполения запроса
+     * @param array $data - массив данных для выполения запроса
      *
      * @return array
      */
-    public static function createAllPostgresArrayPlaceholders(string &$sql, array &$array): array
+    public static function createAllPostgresArrayPlaceholders(string &$sql, array &$data): array
     {
-        if (empty($array[0])) {
-            $array = [$array];
+        if (empty($data[0])) {
+            $data = [$data];
         }
 
-        foreach ($array as $record) {
-            foreach ($record as $key => &$value) {
-                if (!is_array($value)) {
-                    continue;
-                }
-
-                list($placeholders, $newValue) = self::createPostgresArrayPlaceholders($value, $key);
-                $sql = str_replace(":$key", '{' . implode(', ', $placeholders) . '}', $sql);
-                unset($value);
-                $record += $newValue;
+        foreach ($data as &$record) {
+            foreach (array_keys($record) as &$key) {
+                self::replacePostgresArray($sql, $record, $key);
             }
+
+            unset($key);
         }
 
-        $array = count($array) > 1 ? $array : reset($array);
-        return [$sql, $array];
+        unset($record);
+
+        $data = count($data) > 1 ? $data : reset($data);
+        return [$sql, $data];
     }
 
     /**
@@ -285,36 +317,48 @@ class SqlTemplater
     /**
      * Слить несколько полей в одно hstore-поле
      *
+     * @param string $sql - SQL-запрос
      * @param string $fieldName - в какое поле писать результат
-     * @param array $keys - какие поля сливаем
-     * @param array - обрабатываемые данные
+     * @param array $dataSlice - обрабатываемые данные
+     * @param $defaultValue - значение по умолчанию для получаемого поля
      *
      * @return array
      */
-    public static function arraysToHstoreArrays(string $fieldName, array $keys, array &$data): array
+    public static function arraysToHstoreArrays(string &$sql, string $fieldName, array $dataSlice, $defaultValue = null): array
     {
-        if (empty($data[0])) {
-            $data = [$data];
+        $returnData = [];
+        if (!preg_match_all("/:{$fieldName}[\s,\)]+/i", $sql)) {
+            return [$sql, []];
         }
 
-        foreach ($data as $record) {
-            $cnt = !empty($record[$keys[0]]) ? (is_array($record[$keys[0]]) ? count($record[$keys[0]]) : 1) : 0;
-            for ($i = 0; $i < $cnt; $i++) {
-                foreach ($keys as $key) {
-                    if (empty($record[$key][$i])) {
-                        continue;
-                    }
+        if (!$dataSlice) {
+            return [$sql, [":$fieldName" => $returnData]];
+        }
 
-                    $record[$fieldName][][] = "hstore($key, {$record[$key][$i]})";
+        $cnt = 0;
+        foreach ($dataSlice as &$value) {
+            $cnt = max($cnt, count($value));
+        }
+
+        $hstoreArray = [];
+        for ($i = 0; $i < $cnt; $i++) {
+            foreach ($dataSlice as $key => &$value) {
+                if (empty($value[$i])) {
+                    continue;
                 }
 
-                $record[$fieldName][] = implode(' || ', $record[$fieldName][$i]);
+                $newKey = $fieldName . $key . $i;
+                $hstoreArray[$i][] = "hstore('$key', :$newKey)";
+                $returnData[$newKey] = $value[$i];
             }
 
-            $record[$fieldName] = !empty($record[$fieldName]) ? '{' . implode(', ', $record[$fieldName]) . '}' : null;
-            $record = array_diff_key($record, $keys);
+            $hstoreArray[$i] = implode(' || ', $hstoreArray[$i]);
         }
 
-        return count($data) > 1 ? $data : $data[0];
+        unset($value);
+
+        $sql = preg_replace("/:{$fieldName}([\s,\)]+)/i", 'ARRAY[' . implode(', ', $hstoreArray) . ']$1', $sql);
+
+        return [$sql, $returnData];
     }
 }
