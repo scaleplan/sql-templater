@@ -224,6 +224,7 @@ class SqlTemplater
      *
      * @param array $array - PHP-массив
      * @param string $fieldName - префикс имен плейсхолдеров
+     * @param string $castType - к какому типу приводить полученный массив
      *
      * @return array
      */
@@ -239,9 +240,23 @@ class SqlTemplater
             $placeholders[] = ":$name";
         }
 
-        return ['ARRAY[' . implode(', ', $placeholders) . "]::$castType" , $array];
+        if ($castType) {
+            $castType = "::$castType";
+        }
+
+        return ['ARRAY[' . implode(', ', $placeholders) . "]$castType" , $array];
     }
 
+    /**
+     * Заменить PHP-массив в параметрах запроса Postgres-массивом
+     *
+     * @param string $sql - текст запроса
+     * @param array $record - параметры запроса
+     * @param string $fieldName - какое поле заменяем
+     * @param string $castType - к какому типу приводить полученный массив
+     *
+     * @return array
+     */
     public static function replacePostgresArray(string &$sql, array &$record, string $fieldName, string $castType = ''): array
     {
         if (empty($record[$fieldName]) || !is_array($record[$fieldName])) {
