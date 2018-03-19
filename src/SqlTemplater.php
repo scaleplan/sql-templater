@@ -231,14 +231,15 @@ class SqlTemplater
     public static function createPostgresArrayPlaceholders(array &$array, string $fieldName = null, string $castType = ''): array
     {
         $fieldName = $fieldName ?? 'array';
-        $count = count($array);
         $placeholders = [];
-        for ($i = 0; $i < $count; $i++) {
+        foreach ($array as $i => &$value) {
             $name = "$fieldName$i";
-            $array += [$name => $array[$i]];
-            unset($array[$i]);
+            $array += [$name => $value];
+            unset($value);
             $placeholders[] = ":$name";
         }
+
+        unset($value);
 
         if ($castType) {
             $castType = "::$castType";
@@ -327,53 +328,5 @@ class SqlTemplater
     public static function removeExcessSQLArgs(string &$sql, array &$args): array
     {
         return $args = array_intersect_key($args, array_flip(self::getSQLParams($sql)));
-    }
-
-    /**
-     * Слить несколько полей в одно hstore-поле
-     *
-     * @param string $sql - SQL-запрос
-     * @param string $fieldName - в какое поле писать результат
-     * @param array $dataSlice - обрабатываемые данные
-     * @param $defaultValue - значение по умолчанию для получаемого поля
-     *
-     * @return array
-     */
-    public static function arraysToHstoreArrays(string &$sql, string $fieldName, array $dataSlice, $defaultValue = null): array
-    {
-        $returnData = [];
-        if (!preg_match_all("/:{$fieldName}[\s,\)]+/i", $sql)) {
-            return [$sql, []];
-        }
-
-        if (!$dataSlice) {
-            return [$sql, [":$fieldName" => $returnData]];
-        }
-
-        $cnt = 0;
-        foreach ($dataSlice as &$value) {
-            $cnt = max($cnt, count($value));
-        }
-
-        $hstoreArray = [];
-        for ($i = 0; $i < $cnt; $i++) {
-            foreach ($dataSlice as $key => &$value) {
-                if (empty($value[$i])) {
-                    continue;
-                }
-
-                $newKey = $fieldName . $key . $i;
-                $hstoreArray[$i][] = "hstore('$key', :$newKey)";
-                $returnData[$newKey] = $value[$i];
-            }
-
-            $hstoreArray[$i] = implode(' || ', $hstoreArray[$i]);
-        }
-
-        unset($value);
-
-        $sql = preg_replace("/:{$fieldName}([\s,\)]+)/i", 'ARRAY[' . implode(', ', $hstoreArray) . ']$1', $sql);
-
-        return [$sql, $returnData];
     }
 }
