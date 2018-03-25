@@ -2,7 +2,7 @@
 
 namespace avtomon;
 
-class SqlTemplaterException extends \Exception
+class SqlTemplaterException extends CustomException
 {
 }
 
@@ -235,7 +235,7 @@ class SqlTemplater
         foreach ($array as $i => &$value) {
             $name = "$fieldName$i";
             $array += [$name => $value];
-            unset($value);
+            unset($array[$i]);
             $placeholders[] = ":$name";
         }
 
