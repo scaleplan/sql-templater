@@ -9,6 +9,21 @@ class SqlTemplaterException extends CustomException
 class SqlTemplater
 {
     /**
+     * Шаблон списка доступных полей запроса
+     */
+    const FIELDS_LABEL = 'fields';
+
+    /**
+     * Шаблон доступных выражений запроса
+     */
+    const EXPRESSION_LABEL = 'expression';
+
+    /**
+     * Регулярка поиска опцональных частей запроса
+     */
+    const OPTIONAL_TEMPLATE = '\[([^:]*?:([\w\d_\-]+)(?:::[\w\d]+\[\])?.*?)\]';
+
+    /**
      * Актуализировать условия
      *
      * @param string $sql - текст запроса
@@ -16,9 +31,35 @@ class SqlTemplater
      *
      * @return array
      */
-    public static function renderConditions(string &$sql, array &$data): array
+    public static function parseConditions(string &$sql, array &$data): array
     {
         if (!preg_match_all('/\[((?:AND|OR|NOT|AND NOT|OR NOT|WHERE)\s+.+?\s+:([\w\d_\-]+))\]/i', $sql, $match, PREG_SET_ORDER)) {
+            return [$sql, $data];
+        }
+
+        foreach ($match as $m) {
+            $replace = '';
+            if (array_key_exists($m[2], $data)) {
+                $replace = $m[1];
+            }
+
+            $sql = str_replace($m[0], $replace, $sql);
+        }
+
+        return [$sql, $data];
+    }
+
+    /**
+     * Актуализировать необязательные части запроса
+     *
+     * @param string $sql - текст запроса
+     * @param array $data - параметры запроса
+     *
+     * @return array
+     */
+    public static function parseOptional(string &$sql, array &$data): array
+    {
+        if (!preg_match_all('/' . self::OPTIONAL_TEMPLATE . '/is', $sql, $match, PREG_SET_ORDER)) {
             return [$sql, $data];
         }
 
@@ -64,44 +105,16 @@ class SqlTemplater
     }
 
     /**
-     * Разбор SQL-шаблона
+     * Распарсить часть expression
      *
      * @param string $sql - шаблон SQL-запроса
      * @param array $data - данные для выполнения запроса
-     * @param bool $convertArrays - преобразовывать ли массивы PHP в массивы PostgreSQL
      *
      * @return array
      */
-    public static function sql(string &$sql, array &$data, bool $convertArrays = true): array
+    public static function parseExpressions(string &$sql, array &$data): array
     {
-        self::renderConditions($sql, $data);
-
-        if (!preg_match('/(\[expression.*\]|\[fields.*\])/i', $sql)) {
-            return [$sql, self::removeExcessSQLArgs($sql, $data)];
-        }
-
-        if (preg_match_all('/\[fields\:not\((.+?)\)\]/i', $sql, $match)) {
-            foreach ($match[0] as $key => &$value) {
-                if ($value) {
-                    if (isset($data[0]) && is_array($data[0])) {
-                        $new_data = $data[0];
-                    } else {
-                        $new_data = $data;
-                    }
-
-                    $sql = str_replace($value, self::createSelectString(
-                        array_diff_key(
-                            $new_data,
-                            array_flip(explode(',', str_replace(' ', '', $match[1][$key])))
-                        )
-                    ), $sql);
-                }
-            }
-
-            unset($value);
-        }
-
-        if (preg_match_all('/\[expression:not\((.+?)\)\]/i', $sql, $match, PREG_OFFSET_CAPTURE)) {
+        if (preg_match_all('/\[' . self::EXPRESSION_LABEL . ':not\((.+?)\)\]/i', $sql, $match, PREG_OFFSET_CAPTURE)) {
             $new_data = [];
             foreach ($match[0] as $key => &$value) {
                 if ($value) {
@@ -134,11 +147,7 @@ class SqlTemplater
             unset($value);
         }
 
-        if (stripos($sql, '[fields]')) {
-            $sql = str_replace('[fields]', self::createSelectString($data), $sql);
-        }
-
-        if (preg_match_all('/\[expression\]/i', $sql, $match, PREG_OFFSET_CAPTURE)) {
+        if (preg_match_all('/\[' . self::EXPRESSION_LABEL . '\]/i', $sql, $match, PREG_OFFSET_CAPTURE)) {
             foreach ($match[0] as $key => &$value) {
                 if ($value) {
                     $sql = substr_replace($sql, self::createExpression($sql,$data, $value[1]), $value[1], strlen($value[0]));
@@ -148,9 +157,67 @@ class SqlTemplater
             unset($value);
         }
 
+        return [$sql, $data];
+    }
+
+    /**
+     * Распарсить часть fields
+     *
+     * @param string $sql - шаблон SQL-запроса
+     * @param array $data - данные для выполнения запроса
+     *
+     * @return array
+     */
+    public static function parseFields(string &$sql, array &$data): array
+    {
+        if (preg_match_all('/\[' . self::FIELDS_LABEL . '\:not\((.+?)\)\]/i', $sql, $match)) {
+            foreach ($match[0] as $key => &$value) {
+                if ($value) {
+                    if (isset($data[0]) && is_array($data[0])) {
+                        $new_data = $data[0];
+                    } else {
+                        $new_data = $data;
+                    }
+
+                    $sql = str_replace($value, self::createSelectString(
+                        array_diff_key(
+                            $new_data,
+                            array_flip(explode(',', str_replace(' ', '', $match[1][$key])))
+                        )
+                    ), $sql);
+                }
+            }
+
+            unset($value);
+        }
+
+        if (stripos($sql, '[' . self::FIELDS_LABEL . ']')) {
+            $sql = str_replace('[' . self::FIELDS_LABEL . ']', self::createSelectString($data), $sql);
+        }
+
+        return [$sql, $data];
+    }
+
+    /**
+     * Разбор SQL-шаблона
+     *
+     * @param string $sql - шаблон SQL-запроса
+     * @param array $data - данные для выполнения запроса
+     * @param bool $convertArrays - преобразовывать ли массивы PHP в массивы PostgreSQL
+     *
+     * @return array
+     */
+    public static function sql(string $sql, array $data, bool $convertArrays = true): array
+    {
+        self::parseFields($sql, $data);
+        self::parseExpressions($sql, $data);
+        self::parseOptional($sql, $data);
+
         if ($convertArrays) {
             self::createAllPostgresArrayPlaceholders($sql, $data);
         }
+
+        self::removeExcessSQLArgs($sql, $data);
 
         return [$sql, $data];
     }
@@ -228,18 +295,24 @@ class SqlTemplater
      *
      * @return array
      */
-    public static function createPostgresArrayPlaceholders(array &$array, string $fieldName = null, string $castType = ''): array
+    public static function createPostgresArrayPlaceholders(array &$array, string $fieldName = null, string $castType = '', bool $insertValues = false): array
     {
         $fieldName = $fieldName ?? 'array';
-        $placeholders = [];
+        $placeholders = $newArray = [];
         foreach ($array as $i => &$value) {
+            if ($insertValues) {
+                $placeholders[] = "'$value'";
+                continue;
+            }
+
             $name = "$fieldName$i";
-            $array += [$name => $value];
-            unset($array[$i]);
             $placeholders[] = ":$name";
+            $newArray[$name] = $value;
         }
 
         unset($value);
+
+        $array = $newArray;
 
         if ($castType) {
             $castType = "::$castType";
@@ -258,14 +331,14 @@ class SqlTemplater
      *
      * @return array
      */
-    public static function replacePostgresArray(string &$sql, array &$record, string $fieldName, string $castType = ''): array
+    public static function replacePostgresArray(string &$sql, array &$record, string $fieldName, string $castType = '', bool $insertValues = false): array
     {
         if (empty($record[$fieldName]) || !is_array($record[$fieldName])) {
             return [$sql, $record];
         }
 
-        list($placeholders, $newValue) = self::createPostgresArrayPlaceholders($record[$fieldName], $fieldName, $castType);
-        $sql = str_replace(":$fieldName", $placeholders, $sql);
+        list($placeholders, $newValue) = self::createPostgresArrayPlaceholders($record[$fieldName], $fieldName, $castType, $insertValues);
+        $sql = preg_replace("/:$fieldName/i", $placeholders, $sql);
         unset($record[$fieldName]);
         $record += $newValue;
 
@@ -309,7 +382,7 @@ class SqlTemplater
      */
     public static function getSQLParams(string $sql): array
     {
-        if (preg_match_all('/[^:]:([\w\d_\-]+)/i', $sql, $matches))
+        if (preg_match_all('/[^:]*?:([\w\d_\-]+).*/i', $sql, $matches))
         {
             return array_unique($matches[1]);
         }
