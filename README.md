@@ -1,5 +1,222 @@
 # SqlTemplater
 
-Класс методов для SQL-шаблонизации
+A helper class for the SQL standardization.
 
-[Документация](docs)
+Includes several predefined directives that can be included in SQL queries for simplicity:
+
+- ####[fields]
+ 
+Instead of this part of the SQL query inserts a string of data keys that came to the input, i.e. if we have a query:
+
+"'sql
+INSERT INTO
+  user
+ ([fields])
+VALUES 
+  ...
+```
+
+And data:
+
+"'php
+$data = [
+    'name' = > 'Ivan'
+    'surname' = > 'Fuckov'
+];
+```
+
+then after processing the request will take the form:
+
+"'sql
+INSERT INTO
+  user
+ (name, 
+  surname)
+VALUES 
+  ...
+```
+
+This is useful if we do not know exactly which set of data will come to the entrance.
+
+- #### [fields:not(...)]
+
+The action is similar to ** [fields] * * + inside *:not(...)* (instead of dots) you can specify a comma-separated list of non-include fields, for example:
+
+"'sql
+INSERT INTO
+  user
+ ([fields:not (sur)])
+VALUES 
+  ...
+```
+
+converted to:
+
+"'sql
+INSERT INTO
+  user
+ (name)
+VALUES 
+  ...
+```
+
+with the same data.
+
+- ####[expression]
+
+Similar to [fields] only fills in another part of the query, for example:
+
+Request:
+
+"'sql
+INSERT INTO
+  user
+ ([fields])
+VALUES 
+  [expression]
+```
+
+and data:
+
+"'php
+$data = [
+    'name' = > 'Ivan'
+    'surname' = > 'Fuckov'
+];
+```
+
+The result will be:
+
+"'sql
+INSERT INTO
+  user
+ (name, 
+    surname)
+VALUES 
+ (:name,
+  : surname)
+```
+
+If there are multiple lines in the input:
+
+"'php
+$data = [
+    [
+        'name' = > 'Ivan'
+        'surname' = > 'Fuckov'
+    ],
+    [
+        'name' = > 'Vasiliy'
+        'surname' = > 'Chekhov'
+    ]
+];
+```
+
+the result will be:
+
+"'sql
+INSERT INTO
+  user
+ (name, 
+  surname)
+VALUES 
+ (: name0,
+  : surname0),
+ (: name1,
+   : surname1)
+```
+
+and the data will look like:
+
+"'php
+$data = [
+    'name0' = > 'Ivan'
+    'surname0' = > 'Fuckov'
+    'name1' = > 'Vasiliy'
+    'surname1' = > 'Chekhov'
+];
+```
+
+- #### [expression:not(...)]
+
+I think here everything is clear - the substitution of placeholders - all except what's inside*: not(...)*
+
+<br>
+
+It should be noted that if among the parameter values there is an array, it can also be correctly processed:
+
+Request:
+
+"'sql
+INSERT INTO
+  user
+ ([fields])
+VALUES 
+  [expression]
+```
+
+Characteristic:
+
+"'php
+$data = [
+    'name' = > 'Ivan'
+    'surname' = > 'Fuckov',
+    'phone_numbers' => [
+        '+7905555555',
+        '+7904444444'
+    ]
+];
+```
+
+Result:
+
+"'sql
+INSERT INTO
+  user
+ (name, 
+  surname)
+VALUES 
+ (:name,
+  : surname,
+  ARRAY [: phone_numbers0, phone_numbers1])
+```
+
+This conversion can be disabled by passing the *$convertArrays*templating parameter with the value*false*.
+
+<br>
+
+In addition, it is possible to use the optional parts of the query, which are used only if the parameters used in them, for example:
+
+"'sql
+UPDATE
+  *
+FROM
+  user
+[WHERE 
+  group =: group]
+```
+
+If data is transferred:
+
+"'php
+$data = [
+    'group' = > 'admins'
+];
+```
+
+then the resulting query will be:
+
+"'sql
+UPDATE
+  *
+FROM
+  user
+WHERE 
+  group =: group
+```
+
+and if the *group * parameter is passed, the condition will be completely thrown out and the query will return all users.
+
+<br>
+
+[Class documentation](docs_en)

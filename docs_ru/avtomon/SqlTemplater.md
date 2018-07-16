@@ -51,8 +51,8 @@ class устанавливает следующие константы:
 
 - **public static** method.
 - Может принимать следующий параметр(ы):
-    - `$sql` (`string`) &mdash; - текст запроса
-    - `$data` (`array`) &mdash; - параметры запроса
+    - `$sql` (`string`) - текст запроса
+    - `$data` (`array`) - параметры запроса
 - Возвращает `array` value.
 
 ### `parseOptional()` <a name="parseOptional"></a>
@@ -63,8 +63,8 @@ class устанавливает следующие константы:
 
 - **public static** method.
 - Может принимать следующий параметр(ы):
-    - `$sql` (`string`) &mdash; - текст запроса
-    - `$data` (`array`) &mdash; - параметры запроса
+    - `$sql` (`string`) - текст запроса
+    - `$data` (`array`) - параметры запроса
 - Возвращает `array` value.
 
 ### `createExpression()` <a name="createExpression"></a>
@@ -75,9 +75,9 @@ class устанавливает следующие константы:
 
 - **public static** method.
 - Может принимать следующий параметр(ы):
-    - `$sql` (`string`) &mdash; - текст запроса
-    - `$data` (`array`) &mdash; - параметры запроса
-    - `$pos` (`int`) &mdash; - позиция вставки
+    - `$sql` (`string`) - текст запроса
+    - `$data` (`array`) - параметры запроса
+    - `$pos` (`int`) - позиция вставки
 - Возвращает `string` value.
 
 ### `parseExpressions()` <a name="parseExpressions"></a>
@@ -88,8 +88,8 @@ class устанавливает следующие константы:
 
 - **public static** method.
 - Может принимать следующий параметр(ы):
-    - `$sql` (`string`) &mdash; - шаблон SQL-запроса
-    - `$data` (`array`) &mdash; - данные для выполнения запроса
+    - `$sql` (`string`) - шаблон SQL-запроса
+    - `$data` (`array`) - данные для выполнения запроса
 - Возвращает `array` value.
 
 ### `parseFields()` <a name="parseFields"></a>
@@ -100,8 +100,8 @@ class устанавливает следующие константы:
 
 - **public static** method.
 - Может принимать следующий параметр(ы):
-    - `$sql` (`string`) &mdash; - шаблон SQL-запроса
-    - `$data` (`array`) &mdash; - данные для выполнения запроса
+    - `$sql` (`string`) - шаблон SQL-запроса
+    - `$data` (`array`) - данные для выполнения запроса
 - Возвращает `array` value.
 
 ### `sql()` <a name="sql"></a>
@@ -112,9 +112,9 @@ class устанавливает следующие константы:
 
 - **public static** method.
 - Может принимать следующий параметр(ы):
-    - `$sql` (`string`) &mdash; - шаблон SQL-запроса
-    - `$data` (`array`) &mdash; - данные для выполнения запроса
-    - `$convertArrays` (`bool`) &mdash; - преобразовывать ли массивы PHP в массивы PostgreSQL
+    - `$sql` (`string`) - шаблон SQL-запроса
+    - `$data` (`array`) - данные для выполнения запроса
+    - `$convertArrays` (`bool`) - преобразовывать ли массивы PHP в массивы PostgreSQL
 - Возвращает `array` value.
 
 ### `createPrepareFields()` <a name="createPrepareFields"></a>
@@ -125,8 +125,8 @@ class устанавливает следующие константы:
 
 - **public static** method.
 - Может принимать следующий параметр(ы):
-    - `$data` (`array`) &mdash; - массив данных
-    - `$type` (`string`) &mdash; - тип строки плейсхолдеров
+    - `$data` (`array`) - массив данных
+    - `$type` (`string`) - тип строки плейсхолдеров
 - Возвращает `string` value.
 
 ### `createSelectString()` <a name="createSelectString"></a>
@@ -137,7 +137,7 @@ class устанавливает следующие константы:
 
 - **public static** method.
 - Может принимать следующий параметр(ы):
-    - `$data` (`array`) &mdash; - массив данных
+    - `$data` (`array`) - массив данных
 - Возвращает `string` value.
 
 ### `createPostgresArrayPlaceholders()` <a name="createPostgresArrayPlaceholders"></a>
@@ -148,10 +148,10 @@ class устанавливает следующие константы:
 
 - **public static** method.
 - Может принимать следующий параметр(ы):
-    - `$array` (`array`) &mdash; - PHP-массив
-    - `$fieldName` (`string`) &mdash; - префикс имен плейсхолдеров
-    - `$castType` (`string`) &mdash; - к какому типу приводить полученный массив
-    - `$insertValues` (`bool`) &mdash; - вставлять значения, а не плейсхолдеры
+    - `$array` (`array`) - PHP-массив
+    - `$fieldName` (`string`) - префикс имен плейсхолдеров
+    - `$castType` (`string`) - к какому типу приводить полученный массив
+    - `$insertValues` (`bool`) - вставлять значения, а не плейсхолдеры
 - Возвращает `array` value.
 
 ### `replacePostgresArray()` <a name="replacePostgresArray"></a>
@@ -162,11 +162,11 @@ class устанавливает следующие константы:
 
 - **public static** method.
 - Может принимать следующий параметр(ы):
-    - `$sql` (`string`) &mdash; - текст запроса
-    - `$record` (`array`) &mdash; - параметры запроса
-    - `$fieldName` (`string`) &mdash; - какое поле заменяем
-    - `$castType` (`string`) &mdash; - к какому типу приводить полученный массив
-    - `$insertValues` (`bool`) &mdash; - вставлять значения, а не плейсхолдеры
+    - `$sql` (`string`) - текст запроса
+    - `$record` (`array`) - параметры запроса
+    - `$fieldName` (`string`) - какое поле заменяем
+    - `$castType` (`string`) - к какому типу приводить полученный массив
+    - `$insertValues` (`bool`) - вставлять значения, а не плейсхолдеры
 - Возвращает `array` value.
 
 ### `createAllPostgresArrayPlaceholders()` <a name="createAllPostgresArrayPlaceholders"></a>
@@ -177,8 +177,8 @@ class устанавливает следующие константы:
 
 - **public static** method.
 - Может принимать следующий параметр(ы):
-    - `$sql` (`string`) &mdash; - текст SQL-запроса
-    - `$data` (`array`) &mdash; - массив данных для выполения запроса
+    - `$sql` (`string`) - текст SQL-запроса
+    - `$data` (`array`) - массив данных для выполения запроса
 - Возвращает `array` value.
 
 ### `getSQLParams()` <a name="getSQLParams"></a>
@@ -189,7 +189,7 @@ class устанавливает следующие константы:
 
 - **public static** method.
 - Может принимать следующий параметр(ы):
-    - `$sql` (`string`) &mdash; - текст запроса
+    - `$sql` (`string`) - текст запроса
 - Возвращает `array` value.
 
 ### `removeExcessSQLArgs()` <a name="removeExcessSQLArgs"></a>
@@ -200,7 +200,7 @@ class устанавливает следующие константы:
 
 - **public static** method.
 - Может принимать следующий параметр(ы):
-    - `$sql` (`string`) &mdash; - текст запроса
-    - `$args` (`array`) &mdash; - параметры запроса
+    - `$sql` (`string`) - текст запроса
+    - `$args` (`array`) - параметры запроса
 - Возвращает `array` value.
 
