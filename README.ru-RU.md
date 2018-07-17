@@ -8,7 +8,7 @@
  
 Вместо такой части SQL-запроса вставляет строка ключей данных, пришедших на вход, т. е. если у нас есть запрос:
 
-```sql
+```
 INSERT INTO
   user
  ([fields])
@@ -18,7 +18,7 @@ VALUES
 
 И данные:
 
-```php
+```
 $data = [
     'name' => 'Ivan'
     'surname' => 'Fuckov'
@@ -27,7 +27,7 @@ $data = [
 
 то после обработки запрос примет вид:
 
-```sql
+```
 INSERT INTO
   user
  (name, 
@@ -42,7 +42,7 @@ VALUES
 
 Действие аналогично **[fields]** + внутри *:not(...)* (вместо точек) можно указать список невключаемых полей через запятую, например:
 
-```sql
+```
 INSERT INTO
   user
  ([fields:not(surname)])
@@ -52,7 +52,7 @@ VALUES
 
 преобразуется в:
 
-```sql
+```
 INSERT INTO
   user
  (name)
@@ -68,7 +68,7 @@ VALUES
 
 Запрос:
 
-```sql
+```
 INSERT INTO
   user
  ([fields])
@@ -78,7 +78,7 @@ VALUES
 
 и данные:
 
-```php
+```
 $data = [
     'name' => 'Ivan'
     'surname' => 'Fuckov'
@@ -87,7 +87,7 @@ $data = [
 
 Результатот будет:
 
-```sql
+```
 INSERT INTO
   user
  (name, 
@@ -99,7 +99,7 @@ VALUES
 
 Если строчек во входных данных несколько:
 
-```php
+```
 $data = [
     [
         'name' => 'Ivan'
@@ -114,7 +114,7 @@ $data = [
 
 в результате будет:
 
-```sql
+```
 INSERT INTO
   user
  (name, 
@@ -128,7 +128,7 @@ VALUES
 
 и данные примут вид:
 
-```php
+```
 $data = [
     'name0' => 'Ivan'
     'surname0' => 'Fuckov'
@@ -147,7 +147,7 @@ $data = [
 
 Запрос:
 
-```sql
+```
 INSERT INTO
   user
  ([fields])
@@ -157,7 +157,7 @@ VALUES
 
 Параметры:
 
-```php
+```
 $data = [
     'name' => 'Ivan'
     'surname' => 'Fuckov',
@@ -170,7 +170,7 @@ $data = [
 
 Результат:
 
-```sql
+```
 INSERT INTO
   user
  (name, 
@@ -187,7 +187,7 @@ VALUES
 
 Кроме того, есть возможность использовать опциональные части запроса, применяющиеся только при наличие используемых в них параметров, например:
 
-```sql
+```
 UPDATE
   *
 FROM
@@ -198,7 +198,7 @@ FROM
 
 Если переданы данные:
 
-```php
+```
 $data = [
     'group' => 'admins'
 ];
@@ -206,7 +206,7 @@ $data = [
 
 то результирующий запрос будет:
 
-```sql
+```
 UPDATE
   *
 FROM

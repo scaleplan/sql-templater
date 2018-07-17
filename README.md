@@ -8,7 +8,7 @@ Includes several predefined directives that can be included in SQL queries for s
  
 Instead of this part of the SQL query inserts a string of data keys that came to the input, i.e. if we have a query:
 
-"'sql
+```
 INSERT INTO
   user
  ([fields])
@@ -18,7 +18,7 @@ VALUES
 
 And data:
 
-"'php
+```
 $data = [
     'name' = > 'Ivan'
     'surname' = > 'Fuckov'
@@ -27,7 +27,7 @@ $data = [
 
 then after processing the request will take the form:
 
-"'sql
+```
 INSERT INTO
   user
  (name, 
@@ -42,7 +42,7 @@ This is useful if we do not know exactly which set of data will come to the entr
 
 The action is similar to ** [fields] * * + inside *:not(...)* (instead of dots) you can specify a comma-separated list of non-include fields, for example:
 
-"'sql
+```
 INSERT INTO
   user
  ([fields:not (sur)])
@@ -52,7 +52,7 @@ VALUES
 
 converted to:
 
-"'sql
+```
 INSERT INTO
   user
  (name)
@@ -68,7 +68,7 @@ Similar to [fields] only fills in another part of the query, for example:
 
 Request:
 
-"'sql
+```
 INSERT INTO
   user
  ([fields])
@@ -78,7 +78,7 @@ VALUES
 
 and data:
 
-"'php
+```
 $data = [
     'name' = > 'Ivan'
     'surname' = > 'Fuckov'
@@ -87,7 +87,7 @@ $data = [
 
 The result will be:
 
-"'sql
+```
 INSERT INTO
   user
  (name, 
@@ -99,7 +99,7 @@ VALUES
 
 If there are multiple lines in the input:
 
-"'php
+```
 $data = [
     [
         'name' = > 'Ivan'
@@ -114,7 +114,7 @@ $data = [
 
 the result will be:
 
-"'sql
+```
 INSERT INTO
   user
  (name, 
@@ -128,7 +128,7 @@ VALUES
 
 and the data will look like:
 
-"'php
+```
 $data = [
     'name0' = > 'Ivan'
     'surname0' = > 'Fuckov'
@@ -147,7 +147,7 @@ It should be noted that if among the parameter values there is an array, it can 
 
 Request:
 
-"'sql
+```
 INSERT INTO
   user
  ([fields])
@@ -157,7 +157,7 @@ VALUES
 
 Characteristic:
 
-"'php
+```
 $data = [
     'name' = > 'Ivan'
     'surname' = > 'Fuckov',
@@ -170,7 +170,7 @@ $data = [
 
 Result:
 
-"'sql
+```
 INSERT INTO
   user
  (name, 
@@ -187,7 +187,7 @@ This conversion can be disabled by passing the *$convertArrays*templating parame
 
 In addition, it is possible to use the optional parts of the query, which are used only if the parameters used in them, for example:
 
-"'sql
+```
 UPDATE
   *
 FROM
@@ -198,7 +198,7 @@ FROM
 
 If data is transferred:
 
-"'php
+```
 $data = [
     'group' = > 'admins'
 ];
@@ -206,7 +206,7 @@ $data = [
 
 then the resulting query will be:
 
-"'sql
+```
 UPDATE
   *
 FROM
