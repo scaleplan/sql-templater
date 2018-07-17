@@ -4,7 +4,7 @@ A helper class for the SQL standardization.
 
 Includes several predefined directives that can be included in SQL queries for simplicity:
 
-- ####[fields]
+- ####\[fields]
  
 Instead of this part of the SQL query inserts a string of data keys that came to the input, i.e. if we have a query:
 
@@ -62,7 +62,7 @@ VALUES
 
 with the same data.
 
-- ####[expression]
+- ####\[expression]
 
 Similar to <i > [fields]</i> only fills in another part of the query, for example:
 
@@ -188,7 +188,7 @@ This conversion can be disabled by passing the template parameter <I>$convertArr
 In addition, it is possible to use the optional parts of the query, which are used only if the parameters used in them, for example:
 
 ```
-UPDATE
+SELECT
   *
 FROM
   user
@@ -207,7 +207,7 @@ $data = [
 then the resulting query will be:
 
 ```
-UPDATE
+SELECT
   *
 FROM
   user
