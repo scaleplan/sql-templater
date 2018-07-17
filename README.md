@@ -40,7 +40,7 @@ This is useful if we do not know exactly which set of data will come to the entr
 
 - #### [fields:not(...)]
 
-The action is similar to **[fields]* * + inside *:not(...)* (instead of dots) you can specify a comma-separated list of non-include fields, for example:
+The action is similar to <b> [fields]</b> + inside <i>: not(...) </i> (instead of points) you can specify a comma separated list of non-include fields, for example:
 
 ```
 INSERT INTO
@@ -64,7 +64,7 @@ with the same data.
 
 - ####[expression]
 
-Similar to [fields] only fills in another part of the query, for example:
+Similar to <i > [fields]</i> only fills in another part of the query, for example:
 
 Request:
 
@@ -139,7 +139,7 @@ $data = [
 
 - #### [expression:not(...)]
 
-I think here everything is clear - the substitution of placeholders - all except what's inside*: not(...)*
+I think here everything is clear - the substitution of placeholders - all except those inside <i>not(...) </i>
 
 <br>
 
@@ -181,7 +181,7 @@ VALUES
   ARRAY [: phone_numbers0, phone_numbers1])
 ```
 
-This conversion can be disabled by passing the *$convertArrays* templating parameter with the value*false*.
+This conversion can be disabled by passing the template parameter <I>$convertArrays</I> with the value <I>false</I>.
 
 <br>
 
@@ -215,7 +215,7 @@ WHERE
   group =: group
 ```
 
-and if the *group* parameter is passed, the condition will be completely thrown out and the query will return all users.
+and if the <I>group</i> parameter is passed, the condition will be completely thrown out and the query will return all users.
 
 <br>
 
