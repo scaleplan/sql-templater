@@ -13,5 +13,5 @@ Class SqlTemplaterException
 Signature
 ---------
 
-- **class**.
+- ** class**.
 - It is a subclass of the class `avtomon\CustomException`.

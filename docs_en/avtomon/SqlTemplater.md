@@ -13,7 +13,7 @@ Class SqlTemplater
 Signature
 ---------
 
-- **class**.
+- ** class**.
 
 Constants
 ---------
@@ -49,7 +49,7 @@ Update the conditions
 
 #### Signature
 
-- **public static** method.
+- ** public static** method.
 - It can take the following parameter (s):
   - `$sql`(`string`) - the text of the request
   - `$data`(`array`) - request parameters
@@ -61,7 +61,7 @@ Update optional parts of the query
 
 #### Signature
 
-- **public static** method.
+- ** public static** method.
 - It can take the following parameter (s):
   - `$sql`(`string`) - the text of the request
   - `$data`(`array`) - request parameters
@@ -73,7 +73,7 @@ Collect data for insertion or changes
 
 #### Signature
 
-- **public static** method.
+- ** public static** method.
 - It can take the following parameter (s):
   - `$sql`(`string`) - the text of the request
   - `$data`(`array`) - request parameters
@@ -86,7 +86,7 @@ Parse part of expression
 
 #### Signature
 
-- **public static** method.
+- ** public static** method.
 - It can take the following parameter (s):
   - `$sql`(`string`) - the SQL query template
   - `$data`(`array`) - data for query execution
@@ -98,7 +98,7 @@ Part of fields
 
 #### Signature
 
-- **public static** method.
+- ** public static** method.
 - It can take the following parameter (s):
   - `$sql`(`string`) - the SQL query template
   - `$data`(`array`) - data for query execution
@@ -110,7 +110,7 @@ Analysis of the SQL-template
 
 #### Signature
 
-- **public static** method.
+- ** public static** method.
 - It can take the following parameter (s):
   - `$sql`(`string`) - the SQL query template
   - `$data`(`array`) - data for query execution
@@ -123,7 +123,7 @@ Formation of a row of placeholders for SQL queries
 
 #### Signature
 
-- **public static** method.
+- ** public static** method.
 - It can take the following parameter (s):
   - `$data`(`array`) - data array
   - `$type`(`string`) - the type of the row of placeholders
@@ -135,7 +135,7 @@ Forming a list of fields for SQL queries
 
 #### Signature
 
-- **public static** method.
+- ** public static** method.
 - It can take the following parameter (s):
   - `$data`(`array`) - data array
 Returns `string`value.
@@ -146,7 +146,7 @@ Generate a Postgres array from a PHP array
 
 #### Signature
 
-- **public static** method.
+- ** public static** method.
 - It can take the following parameter (s):
   - `$array`(`array`) - PHP array
   - `$fieldName`(`string`) - the prefix of the names of placeholders
@@ -160,7 +160,7 @@ Replace the PHP array with the Postgres array query parameters
 
 #### Signature
 
-- **public static** method.
+- ** public static** method.
 - It can take the following parameter (s):
   - `$sql`(`string`) - the text of the request
   - `$record`(`array`) - query parameters
@@ -175,7 +175,7 @@ Rebuild the query and data set if the data contains values ​​in the form of 
 
 #### Signature
 
-- **public static** method.
+- ** public static** method.
 - It can take the following parameter (s):
   - `$sql`(`string`) - the text of the SQL query
   - `$data`(`array`) - data array for query execution
@@ -187,7 +187,7 @@ Get all the parameters from the SQL query
 
 #### Signature
 
-- **public static** method.
+- ** public static** method.
 - It can take the following parameter (s):
   - `$sql`(`string`) - the text of the request
 Returns the `array`value.
@@ -198,7 +198,7 @@ Clean the SQL query parameters from those that are not used in the query
 
 #### Signature
 
-- **public static** method.
+- ** public static** method.
 - It can take the following parameter (s):
   - `$sql`(`string`) - the text of the request
   - `$args`(`array`) - request parameters
