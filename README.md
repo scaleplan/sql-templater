@@ -2,9 +2,19 @@
 
 A helper class for the SQL standardization.
 
+#### Installation
+
+`
+composer reqire avtomon/sqltemplater
+`
+
+<br>
+
+#### Description
+
 Includes several predefined directives that can be included in SQL queries for simplicity:
 
-- ####\[fields]
+- ####[fields]
  
 Instead of this part of the SQL query inserts a string of data keys that came to the input, i.e. if we have a query:
 
