@@ -1,6 +1,6 @@
 # SqlTemplater
 
-A helper class for the SQL standardization.
+Helper class for SQL templating.
 
 #### Installation
 
