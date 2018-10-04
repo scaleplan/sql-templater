@@ -5,7 +5,7 @@
 #### Установка
 
 ``
-composer reqire avtomon/sqltemplater
+composer reqire scaleplan/sql-templater
 ``
 
 <br>

@@ -5,7 +5,7 @@ Helper class for SQL templating.
 #### Installation
 
 `
-composer reqire avtomon/sqltemplater
+composer reqire scaleplan/sql-templater
 `
 
 <br>

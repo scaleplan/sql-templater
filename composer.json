@@ -3,7 +3,7 @@
     "description": "Query templater for PostgreSQL",
     "autoload": {
         "psr-4": {
-            "avtomon\\": "src/"
+            "Scaleplan\\SqlTemplater\\": "src/"
         }
     },
     "require": {
