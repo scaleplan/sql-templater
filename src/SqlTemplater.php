@@ -1,22 +1,13 @@
 <?php
 
-namespace avtomon;
-
-/**
- * Класс ошибки
- *
- * Class SqlTemplaterException
- * @package avtomon
- */
-class SqlTemplaterException extends CustomException
-{
-}
+namespace Scaleplan\SqlTemplater;
 
 /**
  * Класс методов для SQL-шаблонизации
  *
  * Class SqlTemplater
- * @package avtomon
+ *
+ * @package Scaleplan\SqlTemplater
  */
 class SqlTemplater
 {
