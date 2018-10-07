@@ -1,10 +1,6 @@
 {
-    "name": "avtomon/SqlTemplater",
-    "description": "Request templater for PostgreSQL",
-    "minimum-stability": "dev",
-    "config": {
-        "process-timeout": 1800
-    },
+    "name": "scaleplan/sql-templater",
+    "description": "Query templater for PostgreSQL",
     "autoload": {
         "psr-4": {
             "avtomon\\": "src/"
