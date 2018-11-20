@@ -34,9 +34,14 @@ class SqlTemplater
      *
      * @return array
      */
-    public static function parseConditions(string &$sql, array &$data): array
+    public static function parseConditions(string &$sql, array &$data) : array
     {
-        if (!preg_match_all('/\[((?:AND|OR|NOT|AND NOT|OR NOT|WHERE)\s+.+?\s+:([\w_\-]+))\]/i', $sql, $match, PREG_SET_ORDER)) {
+        if (!preg_match_all(
+            '/\[((?:AND|OR|NOT|AND NOT|OR NOT|WHERE)\s+.+?\s+:([\w_\-]+))\]/i',
+            $sql,
+            $match,
+            PREG_SET_ORDER
+        )) {
             return [$sql, $data];
         }
 
@@ -60,9 +65,9 @@ class SqlTemplater
      *
      * @return array
      */
-    public static function parseOptional(string &$sql, array &$data): array
+    public static function parseOptional(string &$sql, array &$data) : array
     {
-        if (!preg_match_all('/' . self::OPTIONAL_TEMPLATE . '/s', $sql, $match, PREG_SET_ORDER)) {
+        if (!preg_match_all('/' . static::OPTIONAL_TEMPLATE . '/s', $sql, $match, PREG_SET_ORDER)) {
             return [$sql, $data];
         }
 
@@ -87,12 +92,12 @@ class SqlTemplater
      *
      * @return string
      */
-    public static function createExpression(string &$sql, array &$data, int &$pos): string
+    public static function createExpression(string &$sql, array &$data, int &$pos) : string
     {
         $iPos = strripos(substr($sql, 0, $pos), 'INSERT');
         $uPos = strripos(substr($sql, 0, $pos), 'UPDATE');
         if ($iPos !== false && ($iPos > $uPos || $uPos === false)) {
-            return self::createPrepareFields($data);
+            return static::createPrepareFields($data);
         }
 
         if ($uPos !== false && ($uPos > $iPos || $iPos === false)) {
@@ -103,7 +108,7 @@ class SqlTemplater
                 }
             }
 
-            return self::createPrepareFields($data2, 'update');
+            return static::createPrepareFields($data2, 'update');
         }
 
         return $sql;
@@ -117,9 +122,14 @@ class SqlTemplater
      *
      * @return array
      */
-    public static function parseExpressions(string &$sql, array &$data): array
+    public static function parseExpressions(string &$sql, array &$data) : array
     {
-        if (preg_match_all('/\[' . self::EXPRESSION_LABEL . ':not\((.+?)\)\]/i', $sql, $match, PREG_OFFSET_CAPTURE)) {
+        if (preg_match_all(
+            '/\[' . static::EXPRESSION_LABEL . ':not\((.+?)\)\]/i',
+            $sql,
+            $match,
+            PREG_OFFSET_CAPTURE
+        )) {
             $new_data = [];
             foreach ($match[0] as $key => &$value) {
                 if ($value) {
@@ -139,8 +149,13 @@ class SqlTemplater
                         );
                     }
 
-                    $sql = substr_replace($sql, self::createExpression($sql, $new_data, $value[1]), $value[1], \strlen($value[0]));
-                    self::createExpression($sql, $data, $value[1]);
+                    $sql = substr_replace(
+                        $sql,
+                        static::createExpression($sql, $new_data, $value[1]),
+                        $value[1],
+                        \strlen($value[0])
+                    );
+                    static::createExpression($sql, $data, $value[1]);
                     foreach (array_keys($data) as $k) {
                         if (strpos($sql, ':' . $k) === false) {
                             unset($data[$k]);
@@ -152,10 +167,20 @@ class SqlTemplater
             unset($value);
         }
 
-        if (preg_match_all('/\[' . self::EXPRESSION_LABEL . '\]/i', $sql, $match, PREG_OFFSET_CAPTURE)) {
+        if (preg_match_all(
+            '/\[' . static::EXPRESSION_LABEL . '\]/i',
+            $sql,
+            $match,
+            PREG_OFFSET_CAPTURE
+        )) {
             foreach ($match[0] as $key => &$value) {
                 if ($value) {
-                    $sql = substr_replace($sql, self::createExpression($sql,$data, $value[1]), $value[1], \strlen($value[0]));
+                    $sql = substr_replace(
+                        $sql,
+                        static::createExpression($sql, $data, $value[1]),
+                        $value[1],
+                        \strlen($value[0])
+                    );
                 }
             }
 
@@ -173,9 +198,9 @@ class SqlTemplater
      *
      * @return array
      */
-    public static function parseFields(string &$sql, array &$data): array
+    public static function parseFields(string &$sql, array &$data) : array
     {
-        if (preg_match_all('/\[' . self::FIELDS_LABEL . '\:not\((.+?)\)\]/i', $sql, $match)) {
+        if (preg_match_all('/\[' . static::FIELDS_LABEL . '\:not\((.+?)\)\]/i', $sql, $match)) {
             foreach ($match[0] as $key => &$value) {
                 if ($value) {
                     if (isset($data[0]) && \is_array($data[0])) {
@@ -184,7 +209,7 @@ class SqlTemplater
                         $new_data = $data;
                     }
 
-                    $sql = str_replace($value, self::createSelectString(
+                    $sql = str_replace($value, static::createSelectString(
                         array_diff_key(
                             $new_data,
                             array_flip(explode(',', str_replace(' ', '', $match[1][$key])))
@@ -196,8 +221,8 @@ class SqlTemplater
             unset($value);
         }
 
-        if (stripos($sql, '[' . self::FIELDS_LABEL . ']')) {
-            $sql = str_replace('[' . self::FIELDS_LABEL . ']', self::createSelectString($data), $sql);
+        if (stripos($sql, '[' . static::FIELDS_LABEL . ']')) {
+            $sql = str_replace('[' . static::FIELDS_LABEL . ']', static::createSelectString($data), $sql);
         }
 
         return [$sql, $data];
@@ -212,21 +237,24 @@ class SqlTemplater
      *
      * @return array
      */
-    public static function sql(string &$sql, array &$data, bool $convertArrays = true): array
+    public static function sql(string &$sql, array &$data, bool $convertArrays = true) : array
     {
-        if (!preg_match('/(\[' . self::EXPRESSION_LABEL . '\]|\[' . self::FIELDS_LABEL . '\]|[^:]+?:[\w_\-]+.*?)/i', $sql)) {
+        if (!preg_match(
+            '/(\[' . static::EXPRESSION_LABEL . '\]|\[' . static::FIELDS_LABEL . '\]|[^:]+?:[\w_\-]+.*?)/i',
+            $sql
+        )) {
             return [$sql, $data];
         }
 
-        self::parseFields($sql, $data);
-        self::parseExpressions($sql, $data);
-        self::parseOptional($sql, $data);
+        static::parseFields($sql, $data);
+        static::parseExpressions($sql, $data);
+        static::parseOptional($sql, $data);
 
         if ($convertArrays) {
-            self::createAllPostgresArrayPlaceholders($sql, $data);
+            static::createAllPostgresArrayPlaceholders($sql, $data);
         }
 
-        self::removeExcessSQLArgs($sql, $data);
+        static::removeExcessSQLArgs($sql, $data);
 
         return [$sql, $data];
     }
@@ -239,7 +267,7 @@ class SqlTemplater
      *
      * @return string
      */
-    public static function createPrepareFields(array &$data, string $type = 'insert'): string
+    public static function createPrepareFields(array &$data, string $type = 'insert') : string
     {
         $string = '';
         $dataTmp = [];
@@ -270,7 +298,7 @@ class SqlTemplater
                 break;
 
             case 'update':
-                $dataTmp = array_map(function ($item) {
+                $dataTmp = array_map(function($item) {
                     return "$item = :$item";
                 }, array_keys($data));
 
@@ -289,7 +317,7 @@ class SqlTemplater
      *
      * @return string
      */
-    public static function createSelectString(array $data): string
+    public static function createSelectString(array $data) : string
     {
         if (isset($data[0])) {
             $data = $data[0];
@@ -308,7 +336,12 @@ class SqlTemplater
      *
      * @return array
      */
-    public static function createPostgresArrayPlaceholders(array &$array, string $fieldName = null, string $castType = '', bool $insertValues = false): array
+    public static function createPostgresArrayPlaceholders(
+        array &$array,
+        string $fieldName = null,
+        string $castType = '',
+        bool $insertValues = false
+    ) : array
     {
         $fieldName = $fieldName ?? 'array';
         $placeholders = $newArray = [];
@@ -331,7 +364,7 @@ class SqlTemplater
             $castType = "::$castType";
         }
 
-        return ['ARRAY[' . implode(', ', $placeholders) . "]$castType" , $array];
+        return ['ARRAY[' . implode(', ', $placeholders) . "]$castType", $array];
     }
 
     /**
@@ -345,13 +378,20 @@ class SqlTemplater
      *
      * @return array
      */
-    public static function replacePostgresArray(string &$sql, array &$record, string $fieldName, string $castType = '', bool $insertValues = false): array
+    public static function replacePostgresArray(
+        string &$sql,
+        array &$record,
+        string $fieldName,
+        string $castType = '',
+        bool $insertValues = false
+    ) : array
     {
         if (empty($record[$fieldName]) || !\is_array($record[$fieldName])) {
             return [$sql, $record];
         }
 
-        [$placeholders, $newValue] = self::createPostgresArrayPlaceholders($record[$fieldName], $fieldName, $castType, $insertValues);
+        [$placeholders, $newValue]
+            = static::createPostgresArrayPlaceholders($record[$fieldName], $fieldName, $castType, $insertValues);
         $sql = preg_replace("/:$fieldName/i", $placeholders, $sql);
         unset($record[$fieldName]);
         $record += $newValue;
@@ -367,7 +407,7 @@ class SqlTemplater
      *
      * @return array
      */
-    public static function createAllPostgresArrayPlaceholders(string &$sql, array &$data): array
+    public static function createAllPostgresArrayPlaceholders(string &$sql, array &$data) : array
     {
         if (empty($data[0]) || !\is_array($data[0])) {
             $data = [$data];
@@ -375,7 +415,7 @@ class SqlTemplater
 
         foreach ($data as &$record) {
             foreach (array_keys($record) as &$key) {
-                self::replacePostgresArray($sql, $record, $key);
+                static::replacePostgresArray($sql, $record, $key);
             }
 
             unset($key);
@@ -394,10 +434,9 @@ class SqlTemplater
      *
      * @return array
      */
-    public static function getSQLParams(string $sql): array
+    public static function getSQLParams(string $sql) : array
     {
-        if (preg_match_all('/[^:]+?:([\w_\-]+).*?/i', $sql, $matches))
-        {
+        if (preg_match_all('/[^:]+?:([\w_\-]+).*?/i', $sql, $matches)) {
             return array_unique($matches[1]);
         }
 
@@ -412,8 +451,8 @@ class SqlTemplater
      *
      * @return array
      */
-    public static function removeExcessSQLArgs(string &$sql, array &$args): array
+    public static function removeExcessSQLArgs(string &$sql, array &$args) : array
     {
-        return $args = array_intersect_key($args, array_flip(self::getSQLParams($sql)));
+        return $args = array_intersect_key($args, array_flip(static::getSQLParams($sql)));
     }
 }
