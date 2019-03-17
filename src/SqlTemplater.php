@@ -137,7 +137,7 @@ class SqlTemplater
                         foreach ($data as $k => & $v) {
                             $new_data[$k] = array_diff_key(
                                 $v,
-                                array_flip(explode(',', str_replace(' ', '', $match[1][$key][0])))
+                                array_flip(array_map('trim', explode(',', $match[1][$key][0])))
                             );
                         }
 
@@ -145,7 +145,7 @@ class SqlTemplater
                     } else {
                         $new_data = array_diff_key(
                             $data,
-                            array_flip(explode(',', str_replace(' ', '', $match[1][$key][0])))
+                            array_flip(array_map('trim', explode(',', $match[1][$key][0])))
                         );
                     }
 
@@ -175,7 +175,7 @@ class SqlTemplater
         )) {
             foreach ($match[0] as $key => &$value) {
                 if ($value) {
-                    $sql = substr_replace(
+                    $sql = \substr_replace(
                         $sql,
                         static::createExpression($sql, $data, $value[1]),
                         $value[1],
@@ -212,7 +212,7 @@ class SqlTemplater
                     $sql = str_replace($value, static::createSelectString(
                         array_diff_key(
                             $new_data,
-                            array_flip(explode(',', str_replace(' ', '', $match[1][$key])))
+                            array_flip(array_map('trim', explode(',', $match[1][$key])))
                         )
                     ), $sql);
                 }
@@ -436,7 +436,7 @@ class SqlTemplater
      */
     public static function getSQLParams(string $sql) : array
     {
-        if (preg_match_all('/[^:]+?:([\w_\-]+).*?/i', $sql, $matches)) {
+        if (preg_match_all('/[^:]+?:([\w_\-]+).*?/', $sql, $matches)) {
             return array_unique($matches[1]);
         }
 
