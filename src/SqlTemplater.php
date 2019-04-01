@@ -250,6 +250,7 @@ class SqlTemplater
         static::parseExpressions($sql, $data);
         static::parseOptional($sql, $data);
 
+        static::createOrderByFromArray($sql, $data);
         if ($convertArrays) {
             static::createAllPostgresArrayPlaceholders($sql, $data);
         }
@@ -454,5 +455,34 @@ class SqlTemplater
     public static function removeExcessSQLArgs(string &$sql, array &$args) : array
     {
         return $args = array_intersect_key($args, array_flip(static::getSQLParams($sql)));
+    }
+
+    /**
+     * Софрмировать сортировку из массива вида [<поле> => <направление сортировки>, ...]
+     *
+     * @param string $sql - текст запроса
+     * @param array $args - параметры запроса
+     */
+    public static function createOrderByFromArray(string &$sql, array &$args) : void
+    {
+        if (!preg_match('/ORDER BY\s+:(\w+)/', $sql, $matches)) {
+            return;
+        }
+
+        if (!array_key_exists($matches[1], $args) || !\is_array($args[$matches[1]])) {
+            return;
+        }
+
+        $sort = [];
+        foreach ($args[$matches[1]] as $field => $direction) {
+            if (preg_match('/\s/', $field . $direction)) {
+                return;
+            }
+
+            $sort[] = "$field $direction";
+        }
+
+        $sql = preg_replace($matches[0], 'ORDER BY ' . implode(', ', $sort), $sql);
+        unset($args[$matches[1]]);
     }
 }
