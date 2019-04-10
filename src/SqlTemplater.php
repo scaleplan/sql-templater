@@ -24,7 +24,7 @@ class SqlTemplater
     /**
      * Регулярка поиска опцональных частей запроса
      */
-    protected const OPTIONAL_TEMPLATE = '[^A-Z](?=(\[([^\[\]:]*?:([\w_\-]+)(?:::\w+\[\])?.*?)\]))';
+    protected const OPTIONAL_TEMPLATE = '\[([^:]+:[\w_\-]+.+?)\]';
 
     /**
      * Актуализировать условия
@@ -37,21 +37,25 @@ class SqlTemplater
     public static function parseConditions(string &$sql, array &$data) : array
     {
         if (!preg_match_all(
-            '/\[((?:AND|OR|NOT|AND NOT|OR NOT|WHERE)\s+.+?\s+:([\w_\-]+))\]/i',
+            '/\[((?:AND|OR|NOT|AND NOT|OR NOT|WHERE)\s+[^:]+:[\w_\-]+.+?)\]/i',
             $sql,
-            $match,
+            $matches,
             PREG_SET_ORDER
         )) {
             return [$sql, $data];
         }
 
-        foreach ($match as $m) {
-            $replace = '';
-            if (array_key_exists($m[2], $data)) {
-                $replace = $m[1];
-            }
+        foreach ($matches as $match) {
+            preg_match_all('/[^:]:([\w_\-]+)/', $sql, $args, PREG_SET_ORDER);
 
-            $sql = str_replace($m[0], $replace, $sql);
+            foreach ($args as $m) {
+                if (!array_key_exists($m[1], $data)) {
+                    $sql = str_replace($match[0], '', $sql);
+                    continue;
+                }
+
+                $sql = str_replace($match[0], $match[1], $sql);
+            }
         }
 
         return [$sql, $data];
@@ -67,18 +71,29 @@ class SqlTemplater
      */
     public static function parseOptional(string &$sql, array &$data) : array
     {
-        if (!preg_match_all('/' . static::OPTIONAL_TEMPLATE . '/s', $sql, $match, PREG_SET_ORDER)) {
+        if (!preg_match_all('/' . static::OPTIONAL_TEMPLATE . '/', $sql, $matches, PREG_SET_ORDER)) {
             return [$sql, $data];
         }
 
-        foreach ($match as $m) {
-            $replace = '';
-            if (array_key_exists($m[3], $data)) {
-                $replace = $m[2];
+        $matches = array_filter($matches, static function(&$match) use (&$data, &$sql) {
+            preg_match_all('/[^:]:([\w_\-]+)/', $match[1], $args, PREG_SET_ORDER);
+
+            foreach ($args as $m) {
+                if (!array_key_exists($m[1], $data)) {
+                    $sql = str_replace($match[0], '', $sql);
+                    $data = array_diff_key($data, array_flip(array_column($args, 1)));
+
+                    return false;
+                }
             }
 
-            $sql = str_replace($m[1], $replace, $sql);
+            return true;
+        });
+
+        foreach ($matches as &$match) {
+            $sql = str_replace($match[0], $match[1], $sql);
         }
+        unset($match);
 
         return [$sql, $data];
     }
