@@ -314,7 +314,7 @@ class SqlTemplater
                 break;
 
             case 'update':
-                $dataTmp = array_map(function($item) {
+                $dataTmp = array_map(static function($item) {
                     return "$item = :$item";
                 }, array_keys($data));
 
