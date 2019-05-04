@@ -24,7 +24,7 @@ class SqlTemplater
     /**
      * Регулярка поиска опцональных частей запроса
      */
-    protected const OPTIONAL_TEMPLATE = '\[([^:]+:[\w_\-]+.+?)\]';
+    protected const OPTIONAL_TEMPLATE = '\[([^:]+:[\w_\-]+(?:::[\w\.]+\[\]|.)*?)\]';
 
     /**
      * Актуализировать условия
