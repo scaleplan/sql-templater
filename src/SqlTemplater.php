@@ -24,7 +24,7 @@ class SqlTemplater
     /**
      * Регулярка поиска опцональных частей запроса
      */
-    protected const OPTIONAL_TEMPLATE = '\[([^:\]]+:[\w_\-]+(?:::[\w\.]+\[\]|.)*?)\]';
+    protected const OPTIONAL_TEMPLATE = '\s\[([^:\]]+:[\w_\-]+(?:::[\w\.]+\[\]|.)*?)\]';
 
     /**
      * Актуализировать условия
@@ -91,7 +91,7 @@ class SqlTemplater
         });
 
         foreach ($matches as &$match) {
-            $sql = str_replace($match[0], $match[1], $sql);
+            $sql = str_replace($match[0], " $match[1]", $sql);
         }
         unset($match);
 
