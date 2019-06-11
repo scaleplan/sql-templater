@@ -263,9 +263,9 @@ class SqlTemplater
 
         static::parseFields($sql, $data);
         static::parseExpressions($sql, $data);
+        static::createOrderByFromArray($sql, $data);
         static::parseOptional($sql, $data);
 
-        static::createOrderByFromArray($sql, $data);
         if ($convertArrays) {
             static::createAllPostgresArrayPlaceholders($sql, $data);
         }
@@ -488,8 +488,14 @@ class SqlTemplater
             return;
         }
 
+        if (!$args[$matches[1]]) {
+            unset($args[$matches[1]]);
+            return;
+        }
+
         $sort = [];
         foreach ($args[$matches[1]] as $field => $direction) {
+            trim($field); trim($direction);
             if (preg_match('/\s/', $field . $direction)) {
                 return;
             }
