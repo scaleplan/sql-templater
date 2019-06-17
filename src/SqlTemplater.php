@@ -244,6 +244,27 @@ class SqlTemplater
     }
 
     /**
+     * @param string $sql
+     * @param array $data
+     *
+     * @return array
+     */
+    public static function replaceNullConditions(string &$sql, array &$data) : array
+    {
+        if (preg_match_all('/=\s*:(\w+)/', $sql, $matches, PREG_SET_ORDER)) {
+            foreach ($matches as $match) {
+                if (!array_key_exists($match[1], $data) || $data[$match[1]] !== null) {
+                    continue;
+                }
+
+                $sql = str_replace($match[0], 'IS NULL', $sql);
+            }
+        }
+
+        return [$sql, $data];
+    }
+
+    /**
      * Разбор SQL-шаблона
      *
      * @param string $sql - шаблон SQL-запроса
@@ -265,6 +286,7 @@ class SqlTemplater
         static::parseExpressions($sql, $data);
         static::createOrderByFromArray($sql, $data);
         static::parseOptional($sql, $data);
+        static::replaceNullConditions($sql, $data);
 
         if ($convertArrays) {
             static::createAllPostgresArrayPlaceholders($sql, $data);
