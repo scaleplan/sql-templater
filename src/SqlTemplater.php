@@ -337,7 +337,7 @@ class SqlTemplater
 
             case 'update':
                 $dataTmp = array_map(static function($item) {
-                    return "$item = :$item";
+                    return "\"$item\" = :$item";
                 }, array_keys($data));
 
                 $string = implode(', ', $dataTmp);
@@ -361,7 +361,11 @@ class SqlTemplater
             $data = $data[0];
         }
 
-        return implode(',', array_keys($data));
+        $fields = array_map(static function ($key) {
+            return '"' . $key . '"';
+        }, array_keys($data));
+
+        return implode(', ', $fields);
     }
 
     /**
