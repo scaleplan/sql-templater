@@ -251,14 +251,22 @@ class SqlTemplater
      */
     public static function replaceNullConditions(string &$sql, array &$data) : array
     {
-        if (preg_match_all('/=\s*:(\w+)/', $sql, $matches, PREG_SET_ORDER)) {
+        $subSql = explode('WHERE', $sql)[1] ?? null;
+        if (!$subSql) {
+            return [$sql, $data];
+        }
+
+        $newSql = $subSql;
+        if (preg_match_all('/=\s*:(\w+)/', $newSql, $matches, PREG_SET_ORDER)) {
             foreach ($matches as $match) {
                 if (!array_key_exists($match[1], $data) || $data[$match[1]] !== null) {
                     continue;
                 }
 
-                $sql = str_replace($match[0], 'IS NULL', $sql);
+                $newSql = str_replace($match[0], 'IS NULL', $newSql);
             }
+
+            $sql = str_replace($subSql, $newSql, $sql);
         }
 
         return [$sql, $data];
