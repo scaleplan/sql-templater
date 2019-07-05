@@ -436,7 +436,7 @@ class SqlTemplater
         bool $insertValues = false
     ) : array
     {
-        if (empty($record[$fieldName]) || !\is_array($record[$fieldName])) {
+        if (!isset($record[$fieldName]) || !\is_array($record[$fieldName])) {
             return [$sql, $record];
         }
 
