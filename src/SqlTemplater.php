@@ -277,11 +277,11 @@ class SqlTemplater
      *
      * @param string $sql - шаблон SQL-запроса
      * @param array $data - данные для выполнения запроса
-     * @param bool $convertArrays - преобразовывать ли массивы PHP в массивы PostgreSQL
+     * @param bool|array $cast - преобразовывать ли массивы PHP в массивы PostgreSQL
      *
      * @return array
      */
-    public static function sql(string &$sql, array &$data, bool $convertArrays = true) : array
+    public static function sql(string &$sql, array &$data, bool $cast = true) : array
     {
         if (!preg_match(
             '/(\[' . static::EXPRESSION_LABEL . '\]|\[' . static::FIELDS_LABEL . '\]|[^:]+?:[\w_\-]+.*?)/i',
@@ -296,8 +296,12 @@ class SqlTemplater
         static::parseOptional($sql, $data);
         static::replaceNullConditions($sql, $data);
 
-        if ($convertArrays) {
+        if ($cast === true) {
             static::createAllPostgresArrayPlaceholders($sql, $data);
+        } elseif (\is_array($cast)) {
+            foreach ($cast as $key => $type) {
+                static::replacePostgresArray($sql, $data, $key, $type);
+            }
         }
 
         static::removeExcessSQLArgs($sql, $data);
@@ -467,11 +471,9 @@ class SqlTemplater
             foreach (array_keys($record) as &$key) {
                 static::replacePostgresArray($sql, $record, $key);
             }
-
-            unset($key);
         }
 
-        unset($record);
+        unset($record, $key);
 
         $data = \count($data) > 1 ? $data : reset($data);
         return [$sql, $data];
