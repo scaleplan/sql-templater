@@ -24,7 +24,7 @@ class SqlTemplater
     /**
      * Регулярка поиска опцональных частей запроса
      */
-    protected const OPTIONAL_TEMPLATE = '\s\[([^:\]]+:[\w_\-]+(?:::[\w\.]+\[\]|.)*?)\]';
+    protected const OPTIONAL_TEMPLATE = '\[([^:\]]+:[\w_\-]+(?:::[\w\.]+\[\]|.)*?)\]';
 
     /**
      * Актуализировать условия
@@ -281,7 +281,7 @@ class SqlTemplater
      *
      * @return array
      */
-    public static function sql(string &$sql, array &$data, bool $cast = true) : array
+    public static function sql(string &$sql, array &$data, $cast = true) : array
     {
         if (!preg_match(
             '/(\[' . static::EXPRESSION_LABEL . '\]|\[' . static::FIELDS_LABEL . '\]|[^:]+?:[\w_\-]+.*?)/i',
