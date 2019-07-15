@@ -24,7 +24,7 @@ class SqlTemplater
     /**
      * Регулярка поиска опцональных частей запроса
      */
-    protected const OPTIONAL_TEMPLATE = '\[([^:\]]+:[\w_\-]+(?:::[\w\.]+\[\]|.)*?)\]';
+    protected const OPTIONAL_TEMPLATE = '\[([^:\]]+:[\w_\-]+(?:::[\w\.]+\[\]|.|\s)*?)\]';
 
     /**
      * Актуализировать условия
@@ -294,7 +294,7 @@ class SqlTemplater
         static::parseExpressions($sql, $data);
         static::createOrderByFromArray($sql, $data);
         static::parseOptional($sql, $data);
-        static::replaceNullConditions($sql, $data);
+        //static::replaceNullConditions($sql, $data);
 
         if ($cast === true) {
             static::createAllPostgresArrayPlaceholders($sql, $data);
