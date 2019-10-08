@@ -249,7 +249,7 @@ class SqlTemplater
      *
      * @return array
      */
-    public static function replaceNullConditions(string &$sql, array &$data) : array
+    public static function replaceNullAndNotNullConditions(string &$sql, array &$data) : array
     {
         $subSql = explode('WHERE', $sql)[1] ?? null;
         if (!$subSql) {
@@ -259,11 +259,18 @@ class SqlTemplater
         $newSql = $subSql;
         if (preg_match_all('/=\s*:(\w+)/', $newSql, $matches, PREG_SET_ORDER)) {
             foreach ($matches as $match) {
-                if (!array_key_exists($match[1], $data) || $data[$match[1]] !== null) {
+                if (!array_key_exists($match[1], $data)) {
                     continue;
                 }
 
-                $newSql = str_replace($match[0], 'IS NULL', $newSql);
+                if ($data[$match[1]] === null) {
+                    $newSql = str_replace($match[0], 'IS NULL', $newSql);
+                    continue;
+                }
+
+                if ($data[$match[1]] === !null) {
+                    $newSql = str_replace($match[0], 'IS NOT NULL', $newSql);
+                }
             }
 
             $sql = str_replace($subSql, $newSql, $sql);
@@ -294,7 +301,7 @@ class SqlTemplater
         static::parseExpressions($sql, $data);
         static::createOrderByFromArray($sql, $data);
         static::parseOptional($sql, $data);
-        //static::replaceNullConditions($sql, $data);
+        static::replaceNullAndNotNullConditions($sql, $data);
 
         if ($cast === true) {
             static::createAllPostgresArrayPlaceholders($sql, $data);
@@ -330,12 +337,10 @@ class SqlTemplater
                             $tmp .= ":$k$index,";
                             $dataTmp[$k . $index] = $v;
                         }
-
                         unset($v);
 
                         $string .= '(' . trim($tmp, ',') . '),';
                     }
-
                     unset($value);
 
                     $string = trim($string, ',');
