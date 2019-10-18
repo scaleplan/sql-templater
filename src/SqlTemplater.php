@@ -337,11 +337,10 @@ class SqlTemplater
                             $tmp .= ":$k$index,";
                             $dataTmp[$k . $index] = $v;
                         }
-                        unset($v);
 
                         $string .= '(' . trim($tmp, ',') . '),';
                     }
-                    unset($value);
+                    unset($value, $v);
 
                     $string = trim($string, ',');
                     $data = $dataTmp;
