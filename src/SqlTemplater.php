@@ -251,29 +251,21 @@ class SqlTemplater
      */
     public static function replaceNullAndNotNullConditions(string &$sql, array &$data) : array
     {
-        $subSql = explode('WHERE', $sql)[1] ?? null;
-        if (!$subSql) {
-            return [$sql, $data];
-        }
-
-        $newSql = $subSql;
-        if (preg_match_all('/=\s*:(\w+)/', $newSql, $matches, PREG_SET_ORDER)) {
+        if (preg_match_all('/=\s*:(\w+)/', $sql, $matches, PREG_SET_ORDER)) {
             foreach ($matches as $match) {
                 if (!array_key_exists($match[1], $data)) {
                     continue;
                 }
 
                 if ($data[$match[1]] === null) {
-                    $newSql = str_replace($match[0], 'IS NULL', $newSql);
+                    $sql = str_replace($match[0], 'IS NULL', $sql);
                     continue;
                 }
 
                 if ($data[$match[1]] === !null) {
-                    $newSql = str_replace($match[0], 'IS NOT NULL', $newSql);
+                    $sql = str_replace($match[0], 'IS NOT NULL', $sql);
                 }
             }
-
-            $sql = str_replace($subSql, $newSql, $sql);
         }
 
         return [$sql, $data];
@@ -299,8 +291,8 @@ class SqlTemplater
 
         static::parseFields($sql, $data);
         static::parseExpressions($sql, $data);
-        static::createOrderByFromArray($sql, $data);
         static::parseOptional($sql, $data);
+        static::createOrderByFromArray($sql, $data);
         static::replaceNullAndNotNullConditions($sql, $data);
 
         if ($cast === true) {
@@ -543,7 +535,7 @@ class SqlTemplater
             $sort[] = "$field $direction";
         }
 
-        $sql = preg_replace($matches[0], 'ORDER BY ' . implode(', ', $sort), $sql);
+        $sql = str_replace($matches[0], 'ORDER BY ' . implode(', ', $sort), $sql);
         unset($args[$matches[1]]);
     }
 }
