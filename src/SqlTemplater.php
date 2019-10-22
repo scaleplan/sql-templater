@@ -329,10 +329,11 @@ class SqlTemplater
                             $tmp .= ":$k$index,";
                             $dataTmp[$k . $index] = $v;
                         }
+                        unset($v);
 
                         $string .= '(' . trim($tmp, ',') . '),';
                     }
-                    unset($value, $v);
+                    unset($value);
 
                     $string = trim($string, ',');
                     $data = $dataTmp;
