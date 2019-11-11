@@ -262,9 +262,9 @@ class SqlTemplater
                     continue;
                 }
 
-                if ($data[$match[1]] === !null) {
-                    $sql = str_replace($match[0], 'IS NOT NULL', $sql);
-                }
+//                if ($data[$match[1]] === !null) {
+//                    $sql = str_replace($match[0], 'IS NOT NULL', $sql);
+//                }
             }
         }
 
