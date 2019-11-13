@@ -251,16 +251,20 @@ class SqlTemplater
      */
     public static function replaceNullAndNotNullConditions(string &$sql, array &$data) : array
     {
-        if (preg_match_all('/=\s*:(\w+)/', $sql, $matches, PREG_SET_ORDER)) {
+        if (preg_match_all('/(!)?=\s*:(\w+)/', $sql, $matches, PREG_SET_ORDER)) {
             foreach ($matches as $match) {
-                if (!array_key_exists($match[1], $data)) {
+                if (!array_key_exists($match[2], $data) || $data[$match[2]] !== null) {
                     continue;
                 }
 
-                if ($data[$match[1]] === null) {
-                    $sql = str_replace($match[0], 'IS NULL', $sql);
-                    continue;
+                if (!$match[1]) {
+                    $replace = 'IS NULL';
+                } else {
+                    $replace = 'IS NOT NULL';
                 }
+
+                //$sql = str_replace($match[0], $replace, $sql);
+                $sql = substr_replace($sql, $replace, strpos($sql, $match[0]), strlen($match[0]));
 
 //                if ($data[$match[1]] === !null) {
 //                    $sql = str_replace($match[0], 'IS NOT NULL', $sql);
