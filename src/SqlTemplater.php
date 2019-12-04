@@ -303,8 +303,10 @@ class SqlTemplater
             static::createAllPostgresArrayPlaceholders($sql, $data);
         } elseif (\is_array($cast)) {
             foreach ($cast as $key => $type) {
-                static::replacePostgresArray($sql, $data, $key, $type);
+                static::replacePostgresArrayAllRecords($sql, $data, $key, $type);
             }
+
+            static::createAllPostgresArrayPlaceholders($sql, $data);
         }
 
         static::removeExcessSQLArgs($sql, $data);
@@ -441,17 +443,56 @@ class SqlTemplater
         bool $insertValues = false
     ) : array
     {
-        if (!isset($record[$fieldName]) || !\is_array($record[$fieldName])) {
+
+        if (!preg_match_all("/:$fieldName\d*/i", $sql, $matches)) {
             return [$sql, $record];
         }
 
-        [$placeholders, $newValue]
-            = static::createPostgresArrayPlaceholders($record[$fieldName], $fieldName, $castType, $insertValues);
-        $sql = preg_replace("/:$fieldName/i", $placeholders, $sql);
-        unset($record[$fieldName]);
-        $record += $newValue;
+        foreach ($matches[0] as $match) {
+            $argName = substr($match, 1);
+            if (!is_array($record[$argName])) {
+                continue;
+            }
+
+            [$placeholders, $newValue]
+                = static::createPostgresArrayPlaceholders($record[$argName], $argName, $castType, $insertValues);
+            $sql = str_replace($match, $placeholders, $sql);
+            unset($record[$argName]);
+            $record += $newValue;
+        }
 
         return [$sql, $record];
+    }
+
+    /**
+     * @param string $sql
+     * @param array $data
+     * @param string $fieldName
+     * @param string $castType
+     * @param bool $insertValues
+     *
+     * @return array
+     */
+    public static function replacePostgresArrayAllRecords(
+        string &$sql,
+        array &$data,
+        string $fieldName,
+        string $castType = '',
+        bool $insertValues = false
+    ) : array
+    {
+        if (empty($data[0]) || !\is_array($data[0])) {
+            $data = [$data];
+        }
+
+        foreach ($data as &$record) {
+            static::replacePostgresArray($sql, $record, $fieldName, $castType, $insertValues);
+        }
+
+        unset($record, $key);
+
+        $data = \count($data) > 1 ? $data : reset($data);
+        return [$sql, $data];
     }
 
     /**
