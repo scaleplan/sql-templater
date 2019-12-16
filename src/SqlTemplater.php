@@ -263,6 +263,8 @@ class SqlTemplater
                     $replace = 'IS NOT NULL';
                 }
 
+                unset($data[$data[$match[2]]]);
+
                 //$sql = str_replace($match[0], $replace, $sql);
                 $sql = substr_replace($sql, $replace, strpos($sql, $match[0]), strlen($match[0]));
 
@@ -294,10 +296,10 @@ class SqlTemplater
         }
 
         static::parseFields($sql, $data);
-        static::parseExpressions($sql, $data);
         static::parseOptional($sql, $data);
         static::createOrderByFromArray($sql, $data);
         static::replaceNullAndNotNullConditions($sql, $data);
+        static::parseExpressions($sql, $data);
 
         if ($cast === true) {
             static::createAllPostgresArrayPlaceholders($sql, $data);
@@ -310,6 +312,10 @@ class SqlTemplater
         }
 
         static::removeExcessSQLArgs($sql, $data);
+
+//        echo $sql;
+//        print_r($data);
+//        exit;
 
         return [$sql, $data];
     }
