@@ -292,10 +292,10 @@ class SqlTemplater
         }
 
         static::parseFields($sql, $data);
-        static::createOrderByFromArray($sql, $data);
         //static::replaceNullAndNotNullConditions($sql, $data);
         static::parseExpressions($sql, $data);
         static::parseOptional($sql, $data);
+        static::createOrderByFromArray($sql, $data);
 
         if ($cast === true) {
             static::createAllPostgresArrayPlaceholders($sql, $data);
