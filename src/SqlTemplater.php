@@ -260,7 +260,7 @@ class SqlTemplater
 
                 unset($data[$match[1]]);
 
-                $sql = substr_replace($sql, 'NULL', strpos($sql, ":$match[1]"), strlen(":$match[1]"));
+                $sql = str_replace(":$match[1]", 'NULL', $sql);
             }
         }
 
