@@ -250,23 +250,17 @@ class SqlTemplater
      *
      * @return array
      */
-    public static function replaceNullAndNotNullConditions(string &$sql, array &$data) : array
+    public static function replaceNullConditions(string &$sql, array &$data) : array
     {
-        if (preg_match_all('/(!)?=\s*:(\w+)/', $sql, $matches, PREG_SET_ORDER)) {
+        if (preg_match_all('/=\s*:(\w+)/', $sql, $matches, PREG_SET_ORDER)) {
             foreach ($matches as $match) {
-                if (!array_key_exists($match[2], $data) || $data[$match[2]] !== null) {
+                if (!array_key_exists($match[1], $data) || $data[$match[1]] !== null) {
                     continue;
                 }
 
-                if (!$match[1]) {
-                    $replace = 'IS NULL';
-                } else {
-                    $replace = 'IS NOT NULL';
-                }
+                unset($data[$match[1]]);
 
-                unset($data[$data[$match[2]]]);
-
-                $sql = substr_replace($sql, $replace, strpos($sql, $match[0]), strlen($match[0]));
+                $sql = substr_replace($sql, 'NULL', strpos($sql, ":$match[1]"), strlen(":$match[1]"));
             }
         }
 
@@ -292,9 +286,9 @@ class SqlTemplater
         }
 
         static::parseFields($sql, $data);
-        //static::replaceNullAndNotNullConditions($sql, $data);
         static::parseExpressions($sql, $data);
         static::parseOptional($sql, $data);
+        static::replaceNullConditions($sql, $data);
         static::createOrderByFromArray($sql, $data);
 
         if ($cast === true) {
