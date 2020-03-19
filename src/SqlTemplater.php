@@ -27,7 +27,7 @@ class SqlTemplater
      */
     protected const OPTIONAL_TEMPLATE = '\[([^:\]]+:[\w_\-]+(?:::[\w\.]+\[\]|.|\s)*?)\]';
 
-    protected const NOT_NULL_MARK = 'NOT NULL';
+    public const NOT_NULL_MARK = 'NOT NULL';
 
     /**
      * Актуализировать условия
@@ -257,13 +257,13 @@ class SqlTemplater
         if (preg_match_all('/=\s*:(\w+)/', $sql, $matches, PREG_SET_ORDER)) {
             foreach ($matches as $match) {
                 if (!array_key_exists($match[1], $data)
-                    && $data[$match[1]] !== null
-                    && strtolower((string)($data[$match[1]])) !== strtolower(static::NOT_NULL_MARK)
+                    || ($data[$match[1]] !== null
+                        && strtolower((string)($data[$match[1]])) !== strtolower(static::NOT_NULL_MARK))
                 ) {
                     continue;
                 }
 
-                if (strtolower((string)($data[$match[1]])) !== strtolower(static::NOT_NULL_MARK)) {
+                if (strtolower((string)($data[$match[1]])) === strtolower(static::NOT_NULL_MARK)) {
                     $sql = str_replace($match[0], 'IS NOT NULL', $sql);
                     continue;
                 }
