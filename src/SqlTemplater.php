@@ -258,7 +258,8 @@ class SqlTemplater
             foreach ($matches as $match) {
                 if (!array_key_exists($match[1], $data)
                     || ($data[$match[1]] !== null
-                        && strtolower((string)($data[$match[1]])) !== strtolower(static::NOT_NULL_MARK))
+                        && (!is_string($data[$match[1]])
+                            || strtolower($data[$match[1]]) !== strtolower(static::NOT_NULL_MARK)))
                 ) {
                     continue;
                 }
@@ -452,7 +453,7 @@ class SqlTemplater
 
         foreach ($matches[0] as $match) {
             $argName = substr($match, 1);
-            if (!is_array($record[$argName])) {
+            if (!isset($record[$argName]) || !is_array($record[$argName])) {
                 continue;
             }
 
