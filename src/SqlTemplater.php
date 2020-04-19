@@ -285,9 +285,11 @@ class SqlTemplater
      * @param array $data - данные для выполнения запроса
      * @param bool|array $cast - преобразовывать ли массивы PHP в массивы PostgreSQL
      *
+     * @param bool $parseOptional
+     *
      * @return array
      */
-    public static function sql(string &$sql, array &$data, $cast = true) : array
+    public static function sql(string &$sql, array &$data, $cast = true, bool $parseOptional = true) : array
     {
         if (!preg_match(
             '/(\[' . static::EXPRESSION_LABEL . '\]|\[' . static::FIELDS_LABEL . '\]|[^:]+?:[\w_\-]+.*?)/i',
@@ -298,7 +300,7 @@ class SqlTemplater
 
         static::parseFields($sql, $data);
         static::parseExpressions($sql, $data);
-        static::parseOptional($sql, $data);
+        $parseOptional && static::parseOptional($sql, $data);
         static::replaceNullConditions($sql, $data);
         static::createOrderByFromArray($sql, $data);
 
